@@ -6,6 +6,7 @@ import com.nusiss.productservice.result.PageResult;
 import com.nusiss.productservice.result.Result;
 import com.nusiss.productservice.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/category")
-@Tag(name = "product category")
+@Tag(name = "product category", description = "this API only for merchant")
 @Slf4j
 public class CategoryController {
     @Autowired
@@ -38,7 +39,7 @@ public class CategoryController {
      * @return
      */
     @GetMapping("/page")
-    @Operation(summary = "query by page")
+    @Operation(summary = "query by page. could query by categoryId or categoryName")
     public Result<PageResult> page(CategoryPageQueryDTO categoryPageQueryDTO){
         log.info("query by page：{}", categoryPageQueryDTO);
         PageResult pageResult = categoryService.pageQuery(categoryPageQueryDTO);

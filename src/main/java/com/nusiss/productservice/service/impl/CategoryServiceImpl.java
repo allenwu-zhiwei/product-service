@@ -68,7 +68,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             queryWrapper.eq("category_id",categoryPageQueryDTO.getCategoryId());
         }
         if(!StringUtils.isEmpty(categoryPageQueryDTO.getCategoryName())){
-            queryWrapper.eq("categoryName", categoryPageQueryDTO.getCategoryName());
+            queryWrapper.eq("category_name", categoryPageQueryDTO.getCategoryName());
         }
 
         categoryMapper.selectPage(page, queryWrapper);
@@ -84,7 +84,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         // Check if the current category is associated with any products. If it is associated, throw a business exception.
         QueryWrapper<Product> wrapper = new QueryWrapper();
 
-        wrapper.eq("categoryId", id);
+        wrapper.eq("category_id", id);
 
         List<Product> product = productMapper.selectList(wrapper);
 
@@ -92,7 +92,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_PRODUCT);
         }
 
-        //删除分类数据
         categoryMapper.deleteById(id);
     }
 

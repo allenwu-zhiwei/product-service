@@ -4,7 +4,6 @@ import com.nusiss.productservice.domain.dto.CategoryDTO;
 import com.nusiss.productservice.domain.dto.CategoryPageQueryDTO;
 import com.nusiss.productservice.result.PageResult;
 
-import java.util.List;
 
 public interface CategoryService {
 
