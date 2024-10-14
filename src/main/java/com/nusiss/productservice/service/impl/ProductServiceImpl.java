@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nusiss.productservice.client.InventoryClient;
+import com.nusiss.productservice.client.UserClient;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.entity.Product;
 import com.nusiss.productservice.mapper.ProductMapper;
@@ -18,14 +20,24 @@ import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Service
 @Slf4j
+//@RequiredArgsConstructor
 public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> implements ProductService {
 
     @Autowired
     private ProductMapper productMapper;
+
+    @Autowired
+    private UserClient client;
+
+    @Autowired
+    private InventoryClient inventoryClient;
+    @Autowired
+    private UserClient userClient;
 
     /**
      * add product
@@ -36,9 +48,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         Product product = new Product();
         product.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         product.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+        // user info
+        product.setCreateUser(client.queryCurrentUser());
+        product.setUpdateUser(client.queryCurrentUser());
+
         BeanUtils.copyProperties(productDTO, product);
 
         productMapper.insert(product);
+        // inventory info
+        inventoryClient.add(product.getProductId(), productDTO.getAvailableStock());
+
     }
 
     /**
@@ -93,8 +112,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(!StringUtils.isEmpty(productPageQueryDTO.getCategoryId())){
             queryWrapper.eq("category_id", productPageQueryDTO.getCategoryId());
         }
+        // only query themselves created product
+        queryWrapper.eq("create_user", userClient.queryCurrentUser());
+
 
         productMapper.selectPage(page, queryWrapper);
+        //get inventory
+        List<Product> products = page.getRecords();
+        for(Product product : products){
+            int stock = inventoryClient.get(product.getProductId());
+            product.setAvailableStock(stock);
+        }
 
         return new PageResult(page.getTotal(), page.getRecords());
     }
@@ -108,8 +136,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         Product product = new Product();
         product.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         BeanUtils.copyProperties(productDTO, product);
-
+        //user info
+        product.setUpdateUser(client.queryCurrentUser());
         productMapper.updateById(product);
+        // inventory info
+        inventoryClient.update(product.getProductId(), productDTO.getAvailableStock());
 
     }
 

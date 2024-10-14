@@ -6,9 +6,9 @@ import java.sql.Timestamp;
 @Data
 public class ProductDTO {
 
-  private long productId;
+  private Long productId;
 
-  private long sellerId;
+  private Long sellerId;
 
   private String name;
 
@@ -16,6 +16,9 @@ public class ProductDTO {
 
   private double price;
 
-  private long categoryId;
+  private Long categoryId;
+
+  // this field is for inventory
+  private int availableStock;
 
 }

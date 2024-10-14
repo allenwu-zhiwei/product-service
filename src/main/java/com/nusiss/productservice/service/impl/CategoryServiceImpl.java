@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nusiss.productservice.client.UserClient;
 import com.nusiss.productservice.constant.MessageConstant;
 import com.nusiss.productservice.domain.dto.CategoryDTO;
 import com.nusiss.productservice.domain.dto.CategoryPageQueryDTO;
@@ -33,6 +34,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     private CategoryMapper categoryMapper;
     @Autowired
     private ProductMapper productMapper;
+    @Autowired
+    private UserClient client;
 
     /**
      * add category
@@ -46,8 +49,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         //time user
         category.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         category.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
-        //category.setCreateUser(BaseContext.getCurrentId().toString());
-        //category.setUpdateUser(BaseContext.getCurrentId().toString());
+        // user info
+        category.setCreateUser(client.queryCurrentUser());
+        category.setUpdateUser(client.queryCurrentUser());
 
         categoryMapper.insert(category);
     }
@@ -105,7 +109,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
         //time user
         category.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
-        //category.setUpdateUser(BaseContext.getCurrentId().toString());
+        category.setUpdateUser(client.queryCurrentUser());
 
         categoryMapper.updateById(category);
     }
