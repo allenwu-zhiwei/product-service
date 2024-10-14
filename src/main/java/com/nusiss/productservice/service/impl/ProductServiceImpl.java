@@ -32,9 +32,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private ProductMapper productMapper;
 
     @Autowired
-    private UserClient client;
-
-    @Autowired
     private InventoryClient inventoryClient;
     @Autowired
     private UserClient userClient;
@@ -49,8 +46,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         product.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         product.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         // user info
-        product.setCreateUser(client.queryCurrentUser());
-        product.setUpdateUser(client.queryCurrentUser());
+        product.setCreateUser(userClient.queryCurrentUser());
+        product.setUpdateUser(userClient.queryCurrentUser());
 
         BeanUtils.copyProperties(productDTO, product);
 
@@ -137,7 +134,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         product.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
         BeanUtils.copyProperties(productDTO, product);
         //user info
-        product.setUpdateUser(client.queryCurrentUser());
+        product.setUpdateUser(userClient.queryCurrentUser());
         productMapper.updateById(product);
         // inventory info
         inventoryClient.update(product.getProductId(), productDTO.getAvailableStock());
@@ -152,6 +149,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public void deleteById(Long id) {
 
         productMapper.deleteById(id);
+        // inventory info
+        inventoryClient.delete(id);
     }
 
 

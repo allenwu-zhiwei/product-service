@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 
-@Tag(name = "product info" , description = "this API for merchant and consumer, consumer only use pageConsumer method.")
+@Tag(name = "product info" , description = "These APIs for merchant and consumer, consumer only use pageConsumer method.")
 @RestController
 @RequestMapping("/product")
 @RequiredArgsConstructor
@@ -34,9 +34,6 @@ public class ProductController {
     public Result save(@RequestBody ProductDTO productDTO) {
         log.info("add product：{}", productDTO);
         productService.save(productDTO);
-/*//        清理缓存数据
-        String key = "dish_" + productDTO.getCategoryId();
-        clearCache(key);*/
 
         return Result.success();
     }
@@ -78,9 +75,6 @@ public class ProductController {
     public Result update(@RequestBody ProductDTO productDTO) {
         log.info("modify product：{}", productDTO);
         productService.update(productDTO);
-
-        //将所有的菜品缓存数据清理掉，所有以dish_开头的key
-        //clearCache("dish_*");
 
         return Result.success();
     }

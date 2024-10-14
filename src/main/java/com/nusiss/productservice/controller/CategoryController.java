@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/category")
-@Tag(name = "product category", description = "this API only for merchant")
+@Tag(name = "product category", description = "These APIs only for merchant")
 @Slf4j
 public class CategoryController {
     @Autowired
