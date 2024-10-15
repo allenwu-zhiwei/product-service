@@ -1,16 +1,19 @@
 package com.nusiss.productservice.controller;
 
+import com.nusiss.productservice.constant.MessageConstant;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
-import com.nusiss.productservice.result.PageResult;
-import com.nusiss.productservice.result.Result;
+import com.nusiss.productservice.result.PageApiResponse;
+import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Tag(name = "product info" , description = "These APIs for merchant and consumer, consumer only use pageConsumer method.")
@@ -29,13 +32,13 @@ public class ProductController {
      * @param productDTO
      * @return
      */
-    @PostMapping()
+    @PostMapping
     @Operation(summary = "add product")
-    public Result save(@RequestBody ProductDTO productDTO) {
+    public ApiResponse save(@RequestHeader("authToken") String authToken, @RequestBody ProductDTO productDTO) {
         log.info("add product：{}", productDTO);
-        productService.save(productDTO);
+        productService.save(authToken, productDTO);
 
-        return Result.success();
+        return ApiResponse.success();
     }
 
     /**
@@ -45,10 +48,10 @@ public class ProductController {
      */
     @GetMapping("/page/consumer")
     @Operation(summary = "page query for consumer", description ="support query by product name(%), description(in), categoryId(=)")
-    public Result<PageResult> pageConsumer(ProductPageQueryDTO productPageQueryDTO) {
+    public ApiResponse<PageApiResponse> pageConsumer(ProductPageQueryDTO productPageQueryDTO) {
         log.info("page query for consumer:{}", productPageQueryDTO);
-        PageResult pageResult = productService.pageQueryConsumer(productPageQueryDTO);
-        return Result.success(pageResult);
+        PageApiResponse pageApiResponse = productService.pageQueryConsumer(productPageQueryDTO);
+        return ApiResponse.success(pageApiResponse);
     }
 
     /**
@@ -58,10 +61,10 @@ public class ProductController {
      */
     @GetMapping("/page/merchant")
     @Operation(summary = "page query for merchant", description ="support query by product name(%), categoryId(=), only query products that they create ")
-    public Result<PageResult> pageMerchant(ProductPageQueryDTO productPageQueryDTO) {
+    public ApiResponse<PageApiResponse> pageMerchant(@RequestHeader("authToken") String authToken, ProductPageQueryDTO productPageQueryDTO) {
         log.info("page query for merchant:{}", productPageQueryDTO);
-        PageResult pageResult = productService.pageQueryMerchant(productPageQueryDTO);
-        return Result.success(pageResult);
+        PageApiResponse pageApiResponse = productService.pageQueryMerchant(authToken, productPageQueryDTO);
+        return ApiResponse.success(pageApiResponse);
     }
 
     /**
@@ -71,12 +74,12 @@ public class ProductController {
      * @return
      */
     @PutMapping
-    @Operation(summary = "modify product")
-    public Result update(@RequestBody ProductDTO productDTO) {
+    @Operation(summary = "modify product", description = "modify should give backend all the image urls, it will delete the origin urls and insert new urls")
+    public ApiResponse update(@RequestHeader("authToken") String authToken, @RequestBody ProductDTO productDTO) {
         log.info("modify product：{}", productDTO);
-        productService.update(productDTO);
+        productService.update(authToken, productDTO);
 
-        return Result.success();
+        return ApiResponse.success();
     }
 
     /**
@@ -86,11 +89,43 @@ public class ProductController {
      */
     @DeleteMapping
     @Operation(summary = "delete product")
-    public Result<String> deleteById(Long id){
+    public ApiResponse<String> deleteById(Long id){
         log.info("delete product：{}", id);
         productService.deleteById(id);
-        return Result.success();
+        return ApiResponse.success();
     }
 
+    /**
+     * image upload
+     * @param file
+     * @return
+     */
+    @PostMapping("/image")
+    @Operation(summary = "image upload")
+    public ApiResponse<String> upload(MultipartFile file) {
+        log.info("upload file info：{}", file);
+        String filePath = productService.upload(file);
+        if(StringUtils.isEmpty(filePath)) {
+            return ApiResponse.error(MessageConstant.UPLOAD_FAILED);
+        }
+        return ApiResponse.success(filePath);
+    }
+
+    /**
+     * image delete
+     * @param file
+     * @return
+     */
+    @DeleteMapping("/image")
+    @Operation(summary = "image delete", description = "used for update product operation when users delete exist image. This delete will delete the image from server")
+    public ApiResponse<String> delete(String file) {
+        log.info("delete file info：{}", file);
+        boolean deleteRes = productService.deleteFile(file);
+        if(deleteRes) {
+            return ApiResponse.success();
+        }
+
+        return ApiResponse.error(MessageConstant.DELETE_FAILED);
+    }
 
 }

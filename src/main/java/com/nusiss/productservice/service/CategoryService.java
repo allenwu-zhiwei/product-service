@@ -2,7 +2,7 @@ package com.nusiss.productservice.service;
 
 import com.nusiss.productservice.domain.dto.CategoryDTO;
 import com.nusiss.productservice.domain.dto.CategoryPageQueryDTO;
-import com.nusiss.productservice.result.PageResult;
+import com.nusiss.productservice.result.PageApiResponse;
 
 
 public interface CategoryService {
@@ -11,14 +11,14 @@ public interface CategoryService {
      * add
      * @param categoryDTO
      */
-    void save(CategoryDTO categoryDTO);
+    void save(String authToken, CategoryDTO categoryDTO);
 
     /**
      * query by page
      * @param categoryPageQueryDTO
      * @return
      */
-    PageResult pageQuery(CategoryPageQueryDTO categoryPageQueryDTO);
+    PageApiResponse pageQuery(CategoryPageQueryDTO categoryPageQueryDTO);
 
     /**
      * delete
@@ -30,7 +30,7 @@ public interface CategoryService {
      * update
      * @param categoryDTO
      */
-    void update(CategoryDTO categoryDTO);
+    void update(String authToken, CategoryDTO categoryDTO);
 
 
 }

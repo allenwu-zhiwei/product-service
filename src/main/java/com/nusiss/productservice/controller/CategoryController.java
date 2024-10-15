@@ -2,8 +2,8 @@ package com.nusiss.productservice.controller;
 
 import com.nusiss.productservice.domain.dto.CategoryDTO;
 import com.nusiss.productservice.domain.dto.CategoryPageQueryDTO;
-import com.nusiss.productservice.result.PageResult;
-import com.nusiss.productservice.result.Result;
+import com.nusiss.productservice.result.PageApiResponse;
+import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,10 +26,10 @@ public class CategoryController {
      */
     @PostMapping
     @Operation(summary = "add category")
-    public Result<String> save(@RequestBody CategoryDTO categoryDTO){
+    public ApiResponse<String> save(@RequestHeader("authToken") String authToken, @RequestBody CategoryDTO categoryDTO){
         log.info("add category：{}", categoryDTO);
-        categoryService.save(categoryDTO);
-        return Result.success();
+        categoryService.save(authToken, categoryDTO);
+        return ApiResponse.success();
     }
 
     /**
@@ -39,10 +39,10 @@ public class CategoryController {
      */
     @GetMapping("/page")
     @Operation(summary = "query by page. could query by categoryId or categoryName")
-    public Result<PageResult> page(CategoryPageQueryDTO categoryPageQueryDTO){
+    public ApiResponse<PageApiResponse> page(CategoryPageQueryDTO categoryPageQueryDTO){
         log.info("query by page：{}", categoryPageQueryDTO);
-        PageResult pageResult = categoryService.pageQuery(categoryPageQueryDTO);
-        return Result.success(pageResult);
+        PageApiResponse pageApiResponse = categoryService.pageQuery(categoryPageQueryDTO);
+        return ApiResponse.success(pageApiResponse);
     }
 
     /**
@@ -52,10 +52,10 @@ public class CategoryController {
      */
     @DeleteMapping
     @Operation(summary = "delete category")
-    public Result<String> deleteById(Long id){
+    public ApiResponse<String> deleteById(Long id){
         log.info("delete category：{}", id);
         categoryService.deleteById(id);
-        return Result.success();
+        return ApiResponse.success();
     }
 
     /**
@@ -65,9 +65,9 @@ public class CategoryController {
      */
     @PutMapping
     @Operation(summary = "update")
-    public Result<String> update(@RequestBody CategoryDTO categoryDTO){
-        categoryService.update(categoryDTO);
-        return Result.success();
+    public ApiResponse<String> update(@RequestHeader("authToken") String authToken, @RequestBody CategoryDTO categoryDTO){
+        categoryService.update(authToken, categoryDTO);
+        return ApiResponse.success();
     }
 
 }

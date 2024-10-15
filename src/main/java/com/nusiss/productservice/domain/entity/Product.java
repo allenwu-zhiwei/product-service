@@ -1,4 +1,5 @@
 package com.nusiss.productservice.domain.entity;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Entity
@@ -58,6 +60,13 @@ public class Product {
   private Timestamp updateDatetime;
 
   // this field is for inventory
+  // return this field for query method
+  @TableField(exist = false)
   private int availableStock;
+
+  // this field is for image
+  @OneToMany
+  @TableField(exist = false)
+  private List<ProductImage> productImages;
 
 }
