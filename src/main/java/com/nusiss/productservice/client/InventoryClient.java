@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(value = "inventory-service",contextId="inventoryfeignzm1")
 public interface InventoryClient {
 
-    @PutMapping("/inventory/update")
-    int update(@RequestHeader("authToken") String authToken, @RequestParam("productId") Long productId, @RequestParam("availableStock") int availableStock);
+    @PutMapping("/inventory")
+    ApiResponse<String> update(@RequestHeader("authToken") String authToken, @RequestParam("productId") Long productId, @RequestParam("availableStock") int availableStock);
 
     @PostMapping("/inventory")
     ApiResponse<String> add(@RequestHeader("authToken") String authToken, @RequestParam("productId") Long productId, @RequestParam("availableStock") int availableStock);
@@ -17,7 +17,7 @@ public interface InventoryClient {
     int get(Long productId);
 
     @DeleteMapping("/inventory")
-    int delete(Long productId);
+    ApiResponse<String> delete(@RequestParam("productId") Long productId);
 
 
 }

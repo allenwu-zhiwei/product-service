@@ -21,13 +21,17 @@ import org.springframework.stereotype.Service;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
 import com.nusiss.productservice.result.PageApiResponse;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import com.nusiss.commonservice.entity.User;
 import com.nusiss.commonservice.config.ApiResponse;
 
+import java.util.Date;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +54,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
 
     // images upload directory
-    private final String UPLOAD_DIR = "static";
+    private final String UPLOAD_DIR = "static/uploadFile/";
+
+    private final String PREFIX_PATH = "src/main/resources/";
+
 
     /**
      * add product
@@ -84,6 +91,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 image.setUpdateUser(queryCurrentUser(authToken));
                 image.setProductId(product.getProductId());
                 image.setImageUrl(url);
+                image.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+                image.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
                 imageMapper.insert(image);
             }
         }
@@ -201,6 +210,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             image.setUpdateUser(queryCurrentUser(authToken));
             image.setProductId(productDTO.getProductId());
             image.setImageUrl(url);
+            image.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+            image.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
             imageMapper.insert(image);
         }
 
@@ -216,6 +227,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         productMapper.deleteById(id);
         // inventory info
         inventoryClient.delete(id);
+        // image
+        // image info
+        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
+        imageQueryWrapper.eq("product_id", id);
+        imageMapper.delete(imageQueryWrapper);
     }
 
     /**
@@ -224,31 +240,36 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      * @return
      */
     public String upload(MultipartFile file) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        String realPath = new String(PREFIX_PATH + UPLOAD_DIR);
+        log.info("-----------file path【"+ realPath +"】-----------");
+        String format = sdf.format(new Date());
+
+        File file1 = new File(realPath + File.separator + format);
+
+        log.info("-----------absolute path【"+ file1.getAbsolutePath() +"】-----------");
+        if(!file1.isDirectory()){
+            file1.mkdirs();
+        }
+
+        // original file name
+        String originalFilename = file.getOriginalFilename();
+        //  get the extension of original file
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        // generate new file name
+        String objectName = UUID.randomUUID().toString() + extension;
         try {
-            // create directory
-            File directory = new File(UPLOAD_DIR);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            // original file name
-            String originalFilename = file.getOriginalFilename();
-            //  get the extension of original file
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            // generate new file name
-            String objectName = UUID.randomUUID().toString() + extension;
 
-            // save
-            File serverFile = new File(directory, objectName);
-            file.transferTo(serverFile);
-            // get relative path
-            String filePath = UPLOAD_DIR + "/" + objectName;
-            log.info("File upload successfully, file path：{}", filePath);
-
+            File newFile = new File(file1.getAbsolutePath() + File.separator + objectName);
+            file.transferTo(newFile);
+            String filePath = UPLOAD_DIR + format + File.separator + objectName;
+            log.info("-----------【"+ filePath +"】-----------");
             return filePath;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Error while uploading the file: {}", e.getMessage());
             return null;
         }
+
     }
 
     /**
@@ -260,7 +281,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public boolean deleteFile(String filePath) {
         try {
             // Create a File object for the specified path
-            File fileToDelete = new File(filePath);
+            String realPath = PREFIX_PATH + filePath;
+            File fileToDelete = new File(realPath);
 
             // Check if the file exists
             if (fileToDelete.exists()) {
