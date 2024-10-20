@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nusiss.commonservice.feign.UserFeignClient;
 import com.nusiss.productservice.client.InventoryClient;
-import com.nusiss.productservice.client.UserClient;
-import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.entity.Product;
 import com.nusiss.productservice.domain.entity.ProductImage;
@@ -14,7 +13,6 @@ import com.nusiss.productservice.mapper.ImageMapper;
 import com.nusiss.productservice.mapper.ProductMapper;
 import com.nusiss.productservice.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +22,8 @@ import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
 import com.nusiss.productservice.result.PageApiResponse;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import com.nusiss.commonservice.entity.User;
+import com.nusiss.commonservice.config.ApiResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Autowired
     private InventoryClient inventoryClient;
     @Autowired
-    private UserClient userClient;
+    private UserFeignClient userClient;
 
 
     // images upload directory
@@ -72,19 +72,21 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         productMapper.insert(product);
 
         // inventory info
-        inventoryClient.add(product.getProductId(), productDTO.getAvailableStock());
+        inventoryClient.add(authToken, product.getProductId(), productDTO.getAvailableStock());
 
         // image info
-        ProductImage image = new ProductImage();
-        List<String> imageUrls = productDTO.getImageUrls();
-        for(String url : imageUrls) {
-            image.setCreateUser(queryCurrentUser(authToken));
-            image.setUpdateUser(queryCurrentUser(authToken));
-            image.setProductId(productDTO.getProductId());
-            image.setImageUrl(url);
-            imageMapper.insert(image);
-        }
 
+        List<String> imageUrls = productDTO.getImageUrls();
+        if(imageUrls != null && imageUrls.size() > 0){
+            for(String url : imageUrls) {
+                ProductImage image = new ProductImage();
+                image.setCreateUser(queryCurrentUser(authToken));
+                image.setUpdateUser(queryCurrentUser(authToken));
+                image.setProductId(product.getProductId());
+                image.setImageUrl(url);
+                imageMapper.insert(image);
+            }
+        }
     }
 
     /**
@@ -184,16 +186,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         product.setUpdateUser(queryCurrentUser(authToken));
         productMapper.updateById(product);
         // inventory info
-        inventoryClient.update(product.getProductId(), productDTO.getAvailableStock());
+        inventoryClient.update(authToken, product.getProductId(), productDTO.getAvailableStock());
         // image info
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         imageQueryWrapper.eq("product_id", product.getProductId());
         // delete
         imageMapper.delete(imageQueryWrapper);
         // insert
-        ProductImage image = new ProductImage();
+
         List<String> imageUrls = productDTO.getImageUrls();
         for(String url : imageUrls) {
+            ProductImage image = new ProductImage();
             image.setCreateUser(queryCurrentUser(authToken));
             image.setUpdateUser(queryCurrentUser(authToken));
             image.setProductId(productDTO.getProductId());

@@ -1,12 +1,14 @@
 package com.nusiss.productservice.domain.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
 @Data
 public class ProductDTO {
-
+  //@Schema(hidden = true)
   private Long productId;
 
   private Long sellerId;
@@ -15,7 +17,7 @@ public class ProductDTO {
 
   private String description;
 
-  private double price;
+  private BigDecimal price;
 
   private Long categoryId;
 

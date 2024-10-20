@@ -1,5 +1,8 @@
 package com.nusiss.productservice.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -12,12 +15,13 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "product_Image")
+@TableName("product_Image")
 public class ProductImage {
     @Id
+    @TableId(type= IdType.AUTO)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id", nullable = false)
-    private Long id;
+    private Long imageId;
 
     @NotNull
     @Column(name = "product_id", nullable = false)

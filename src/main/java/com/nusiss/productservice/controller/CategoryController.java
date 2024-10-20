@@ -25,7 +25,7 @@ public class CategoryController {
      * @return
      */
     @PostMapping
-    @Operation(summary = "add category")
+    @Operation(summary = "add category", description = "don't use categoryId, only use categoryName")
     public ApiResponse<String> save(@RequestHeader("authToken") String authToken, @RequestBody CategoryDTO categoryDTO){
         log.info("add category：{}", categoryDTO);
         categoryService.save(authToken, categoryDTO);
