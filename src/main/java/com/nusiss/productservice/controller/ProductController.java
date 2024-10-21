@@ -51,7 +51,7 @@ public class ProductController {
      * @return
      */
     @GetMapping("/page/consumer")
-    @Operation(summary = "page query for consumer", description ="support query by product name(%), description(in), categoryId(=)")
+    @Operation(summary = "page query for consumer", description ="support query by product name(%), description(%), categoryId(=)")
     public ApiResponse<PageApiResponse> pageConsumer(ProductPageQueryDTO productPageQueryDTO) {
         log.info("page query for consumer:{}", productPageQueryDTO);
         PageApiResponse pageApiResponse = productService.pageQueryConsumer(productPageQueryDTO);

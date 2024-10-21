@@ -14,7 +14,7 @@ public interface InventoryClient {
     ApiResponse<String> add(@RequestHeader("authToken") String authToken, @RequestParam("productId") Long productId, @RequestParam("availableStock") int availableStock);
 
     @GetMapping("/inventory")
-    int get(Long productId);
+    int get(@RequestParam("productId") Long productId);
 
     @DeleteMapping("/inventory")
     ApiResponse<String> delete(@RequestParam("productId") Long productId);

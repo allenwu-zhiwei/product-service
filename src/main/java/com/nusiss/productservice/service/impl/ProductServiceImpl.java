@@ -117,7 +117,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
         // product description in
         if(!StringUtils.isEmpty(productPageQueryDTO.getDescription())){
-            queryWrapper.in("description", productPageQueryDTO.getDescription());
+            queryWrapper.like("description", productPageQueryDTO.getDescription());
         }
         // product category equal
         if(!StringUtils.isEmpty(productPageQueryDTO.getCategoryId())){
@@ -125,11 +125,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         productMapper.selectPage(page, queryWrapper);
-        //get images
+        //get inventory
         List<Product> products = page.getRecords();
+        for(Product product : products){
+            int stock = inventoryClient.get(product.getProductId());
+            product.setAvailableStock(stock);
+        }
+        //get images
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         for(Product product : products){
-            imageQueryWrapper.eq("product_id", productPageQueryDTO.getProductId());
+            imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
         }
@@ -172,7 +177,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         // get images
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         for(Product product : products){
-            imageQueryWrapper.eq("product_id", productPageQueryDTO.getProductId());
+            imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
         }
