@@ -239,6 +239,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         imageMapper.delete(imageQueryWrapper);
     }
 
+    @Override
+    public Product queryById(Long id) {
+        Product product = productMapper.selectById(id);
+        // image info
+        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
+        imageQueryWrapper.eq("product_id", product.getProductId());
+        List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
+        product.setProductImages(imageList);
+        return product;
+    }
+
     /**
      * upload file
      * @param file

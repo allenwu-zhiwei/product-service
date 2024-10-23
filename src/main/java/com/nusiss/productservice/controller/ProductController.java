@@ -3,6 +3,7 @@ package com.nusiss.productservice.controller;
 import com.nusiss.productservice.constant.MessageConstant;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
+import com.nusiss.productservice.domain.entity.Product;
 import com.nusiss.productservice.domain.entity.ProductImage;
 import com.nusiss.productservice.result.PageApiResponse;
 import com.nusiss.productservice.config.ApiResponse;
@@ -69,6 +70,19 @@ public class ProductController {
         log.info("page query for merchant:{}", productPageQueryDTO);
         PageApiResponse pageApiResponse = productService.pageQueryMerchant(authToken, productPageQueryDTO);
         return ApiResponse.success(pageApiResponse);
+    }
+
+    /**
+     * query productInfo by productId
+     * @param productId
+     * @return
+     */
+    @GetMapping
+    @Operation(summary = "query productInfo by productId")
+    public ApiResponse queryById(Long productId) {
+        log.info("query productInfo by productId:{}", productId);
+        Product product = productService.queryById(productId);
+        return ApiResponse.success(product);
     }
 
     /**
