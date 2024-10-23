@@ -56,6 +56,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     // images upload directory
     private final String UPLOAD_DIR = "static/uploadFile/";
 
+    private final String RETURN_DIR = "uploadFile/";
+
     private final String PREFIX_PATH = "src/main/resources/";
 
 
@@ -278,7 +280,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
             File newFile = new File(file1.getAbsolutePath() + File.separator + objectName);
             file.transferTo(newFile);
-            String filePath = UPLOAD_DIR + format + File.separator + objectName;
+            String filePath = RETURN_DIR + format + File.separator + objectName;
             log.info("-----------【"+ filePath +"】-----------");
             return filePath;
         } catch (Exception e) {
