@@ -45,7 +45,7 @@ public interface ProductService {
      * query product
      * @param id
      */
-    public Product queryById(Long id);
+    public ProductDTO queryById(Long id);
 
     /**
      * upload file

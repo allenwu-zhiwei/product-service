@@ -81,7 +81,7 @@ public class ProductController {
     @Operation(summary = "query productInfo by productId")
     public ApiResponse queryById(Long productId) {
         log.info("query productInfo by productId:{}", productId);
-        Product product = productService.queryById(productId);
+        ProductDTO product = productService.queryById(productId);
         return ApiResponse.success(product);
     }
 

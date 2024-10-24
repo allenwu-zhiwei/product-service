@@ -21,15 +21,14 @@ import org.springframework.stereotype.Service;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
 import com.nusiss.productservice.result.PageApiResponse;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import com.nusiss.commonservice.entity.User;
 import com.nusiss.commonservice.config.ApiResponse;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -242,14 +241,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
-    public Product queryById(Long id) {
+    public ProductDTO queryById(Long id) {
         Product product = productMapper.selectById(id);
+        ProductDTO productDTO = new ProductDTO();
+        BeanUtils.copyProperties(product, productDTO);
         // image info
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         imageQueryWrapper.eq("product_id", product.getProductId());
         List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
-        product.setProductImages(imageList);
-        return product;
+        List<String> urls = new ArrayList<String>();
+        for(ProductImage image : imageList){
+            urls.add(image.getImageUrl());
+        }
+        productDTO.setImageUrls(urls);
+        return productDTO;
     }
 
     /**
