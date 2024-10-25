@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/category")
 @Tag(name = "product category", description = "These APIs only for merchant")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:5000")
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
