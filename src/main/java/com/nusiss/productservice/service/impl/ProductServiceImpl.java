@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nusiss.commonservice.feign.UserFeignClient;
 import com.nusiss.productservice.client.InventoryClient;
-import com.nusiss.productservice.client.UserClient;
-import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.entity.Product;
 import com.nusiss.productservice.domain.entity.ProductImage;
@@ -14,7 +13,6 @@ import com.nusiss.productservice.mapper.ImageMapper;
 import com.nusiss.productservice.mapper.ProductMapper;
 import com.nusiss.productservice.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,10 +22,15 @@ import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
 import com.nusiss.productservice.result.PageApiResponse;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import com.nusiss.commonservice.entity.User;
+import com.nusiss.commonservice.config.ApiResponse;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -46,11 +49,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Autowired
     private InventoryClient inventoryClient;
     @Autowired
-    private UserClient userClient;
+    private UserFeignClient userClient;
 
 
     // images upload directory
-    private final String UPLOAD_DIR = "static";
+    private final String UPLOAD_DIR = "static/uploadFile/";
+
+    private final String RETURN_DIR = "uploadFile/";
+
+    private final String PREFIX_PATH = "src/main/resources/";
+
 
     /**
      * add product
@@ -72,19 +80,23 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         productMapper.insert(product);
 
         // inventory info
-        inventoryClient.add(product.getProductId(), productDTO.getAvailableStock());
+        inventoryClient.add(authToken, product.getProductId(), productDTO.getAvailableStock());
 
         // image info
-        ProductImage image = new ProductImage();
-        List<String> imageUrls = productDTO.getImageUrls();
-        for(String url : imageUrls) {
-            image.setCreateUser(queryCurrentUser(authToken));
-            image.setUpdateUser(queryCurrentUser(authToken));
-            image.setProductId(productDTO.getProductId());
-            image.setImageUrl(url);
-            imageMapper.insert(image);
-        }
 
+        List<String> imageUrls = productDTO.getImageUrls();
+        if(imageUrls != null && imageUrls.size() > 0){
+            for(String url : imageUrls) {
+                ProductImage image = new ProductImage();
+                image.setCreateUser(queryCurrentUser(authToken));
+                image.setUpdateUser(queryCurrentUser(authToken));
+                image.setProductId(product.getProductId());
+                image.setImageUrl(url);
+                image.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+                image.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+                imageMapper.insert(image);
+            }
+        }
     }
 
     /**
@@ -106,7 +118,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
         // product description in
         if(!StringUtils.isEmpty(productPageQueryDTO.getDescription())){
-            queryWrapper.in("description", productPageQueryDTO.getDescription());
+            queryWrapper.like("description", productPageQueryDTO.getDescription());
         }
         // product category equal
         if(!StringUtils.isEmpty(productPageQueryDTO.getCategoryId())){
@@ -114,11 +126,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         productMapper.selectPage(page, queryWrapper);
-        //get images
+        //get inventory
         List<Product> products = page.getRecords();
+        for(Product product : products){
+            int stock = inventoryClient.get(product.getProductId());
+            product.setAvailableStock(stock);
+        }
+        //get images
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         for(Product product : products){
-            imageQueryWrapper.eq("product_id", productPageQueryDTO.getProductId());
+            imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
         }
@@ -161,7 +178,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         // get images
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         for(Product product : products){
-            imageQueryWrapper.eq("product_id", productPageQueryDTO.getProductId());
+            imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
         }
@@ -184,20 +201,23 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         product.setUpdateUser(queryCurrentUser(authToken));
         productMapper.updateById(product);
         // inventory info
-        inventoryClient.update(product.getProductId(), productDTO.getAvailableStock());
+        inventoryClient.update(authToken, product.getProductId(), productDTO.getAvailableStock());
         // image info
         QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         imageQueryWrapper.eq("product_id", product.getProductId());
         // delete
         imageMapper.delete(imageQueryWrapper);
         // insert
-        ProductImage image = new ProductImage();
+
         List<String> imageUrls = productDTO.getImageUrls();
         for(String url : imageUrls) {
+            ProductImage image = new ProductImage();
             image.setCreateUser(queryCurrentUser(authToken));
             image.setUpdateUser(queryCurrentUser(authToken));
             image.setProductId(productDTO.getProductId());
             image.setImageUrl(url);
+            image.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+            image.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
             imageMapper.insert(image);
         }
 
@@ -213,6 +233,28 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         productMapper.deleteById(id);
         // inventory info
         inventoryClient.delete(id);
+        // image
+        // image info
+        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
+        imageQueryWrapper.eq("product_id", id);
+        imageMapper.delete(imageQueryWrapper);
+    }
+
+    @Override
+    public ProductDTO queryById(Long id) {
+        Product product = productMapper.selectById(id);
+        ProductDTO productDTO = new ProductDTO();
+        BeanUtils.copyProperties(product, productDTO);
+        // image info
+        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
+        imageQueryWrapper.eq("product_id", product.getProductId());
+        List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
+        List<String> urls = new ArrayList<String>();
+        for(ProductImage image : imageList){
+            urls.add(image.getImageUrl());
+        }
+        productDTO.setImageUrls(urls);
+        return productDTO;
     }
 
     /**
@@ -221,31 +263,36 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      * @return
      */
     public String upload(MultipartFile file) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        String realPath = new String(PREFIX_PATH + UPLOAD_DIR);
+        log.info("-----------file path【"+ realPath +"】-----------");
+        String format = sdf.format(new Date());
+
+        File file1 = new File(realPath + File.separator + format);
+
+        log.info("-----------absolute path【"+ file1.getAbsolutePath() +"】-----------");
+        if(!file1.isDirectory()){
+            file1.mkdirs();
+        }
+
+        // original file name
+        String originalFilename = file.getOriginalFilename();
+        //  get the extension of original file
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        // generate new file name
+        String objectName = UUID.randomUUID().toString() + extension;
         try {
-            // create directory
-            File directory = new File(UPLOAD_DIR);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            // original file name
-            String originalFilename = file.getOriginalFilename();
-            //  get the extension of original file
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            // generate new file name
-            String objectName = UUID.randomUUID().toString() + extension;
 
-            // save
-            File serverFile = new File(directory, objectName);
-            file.transferTo(serverFile);
-            // get relative path
-            String filePath = UPLOAD_DIR + "/" + objectName;
-            log.info("File upload successfully, file path：{}", filePath);
-
+            File newFile = new File(file1.getAbsolutePath() + File.separator + objectName);
+            file.transferTo(newFile);
+            String filePath = RETURN_DIR + format + File.separator + objectName;
+            log.info("-----------【"+ filePath +"】-----------");
             return filePath;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Error while uploading the file: {}", e.getMessage());
             return null;
         }
+
     }
 
     /**
@@ -257,7 +304,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public boolean deleteFile(String filePath) {
         try {
             // Create a File object for the specified path
-            File fileToDelete = new File(filePath);
+            String realPath = PREFIX_PATH + filePath;
+            File fileToDelete = new File(realPath);
 
             // Check if the file exists
             if (fileToDelete.exists()) {

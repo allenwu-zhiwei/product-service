@@ -3,6 +3,8 @@ package com.nusiss.productservice.controller;
 import com.nusiss.productservice.constant.MessageConstant;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
+import com.nusiss.productservice.domain.entity.Product;
+import com.nusiss.productservice.domain.entity.ProductImage;
 import com.nusiss.productservice.result.PageApiResponse;
 import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.service.ProductService;
@@ -15,12 +17,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Tag(name = "product info" , description = "These APIs for merchant and consumer, consumer only use pageConsumer method.")
 @RestController
 @RequestMapping("/product")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "http://localhost:5000")
 public class ProductController {
 
     @Autowired
@@ -47,7 +53,7 @@ public class ProductController {
      * @return
      */
     @GetMapping("/page/consumer")
-    @Operation(summary = "page query for consumer", description ="support query by product name(%), description(in), categoryId(=)")
+    @Operation(summary = "page query for consumer", description ="support query by product name(%), description(%), categoryId(=)")
     public ApiResponse<PageApiResponse> pageConsumer(ProductPageQueryDTO productPageQueryDTO) {
         log.info("page query for consumer:{}", productPageQueryDTO);
         PageApiResponse pageApiResponse = productService.pageQueryConsumer(productPageQueryDTO);
@@ -65,6 +71,19 @@ public class ProductController {
         log.info("page query for merchant:{}", productPageQueryDTO);
         PageApiResponse pageApiResponse = productService.pageQueryMerchant(authToken, productPageQueryDTO);
         return ApiResponse.success(pageApiResponse);
+    }
+
+    /**
+     * query productInfo by productId
+     * @param productId
+     * @return
+     */
+    @GetMapping
+    @Operation(summary = "query productInfo by productId")
+    public ApiResponse queryById(Long productId) {
+        log.info("query productInfo by productId:{}", productId);
+        ProductDTO product = productService.queryById(productId);
+        return ApiResponse.success(product);
     }
 
     /**
@@ -97,18 +116,22 @@ public class ProductController {
 
     /**
      * image upload
-     * @param file
+     * @param files
      * @return
      */
-    @PostMapping("/image")
+    @PostMapping(value = "/image", consumes = "multipart/form-data")
     @Operation(summary = "image upload")
-    public ApiResponse<String> upload(MultipartFile file) {
-        log.info("upload file info：{}", file);
-        String filePath = productService.upload(file);
-        if(StringUtils.isEmpty(filePath)) {
-            return ApiResponse.error(MessageConstant.UPLOAD_FAILED);
+    public ApiResponse<List<String>> upload(@RequestPart MultipartFile[] files) {
+        log.info("upload file info：{}", files);
+        List<String> fileUrls = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String filePath = productService.upload(file);
+            if(StringUtils.isEmpty(filePath)) {
+                return ApiResponse.error(MessageConstant.UPLOAD_FAILED);
+            }
+            fileUrls.add(filePath);
         }
-        return ApiResponse.success(filePath);
+        return ApiResponse.success(fileUrls);
     }
 
     /**

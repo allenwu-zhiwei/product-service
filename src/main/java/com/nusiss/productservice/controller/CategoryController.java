@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/category")
 @Tag(name = "product category", description = "These APIs only for merchant")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:5000")
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
@@ -25,7 +26,7 @@ public class CategoryController {
      * @return
      */
     @PostMapping
-    @Operation(summary = "add category")
+    @Operation(summary = "add category", description = "don't use categoryId, only use categoryName")
     public ApiResponse<String> save(@RequestHeader("authToken") String authToken, @RequestBody CategoryDTO categoryDTO){
         log.info("add category：{}", categoryDTO);
         categoryService.save(authToken, categoryDTO);

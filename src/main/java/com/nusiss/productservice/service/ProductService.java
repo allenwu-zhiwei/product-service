@@ -1,7 +1,9 @@
 package com.nusiss.productservice.service;
 
+import com.nusiss.productservice.config.ApiResponse;
 import com.nusiss.productservice.domain.dto.ProductDTO;
 import com.nusiss.productservice.domain.dto.ProductPageQueryDTO;
+import com.nusiss.productservice.domain.entity.Product;
 import com.nusiss.productservice.result.PageApiResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +40,12 @@ public interface ProductService {
      * @param id
      */
     public void deleteById(Long id);
+
+    /**
+     * query product
+     * @param id
+     */
+    public ProductDTO queryById(Long id);
 
     /**
      * upload file
