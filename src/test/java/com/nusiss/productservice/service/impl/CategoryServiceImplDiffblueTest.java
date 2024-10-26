@@ -159,7 +159,7 @@ class CategoryServiceImplDiffblueTest {
     @DisplayName("Test pageQuery(CategoryPageQueryDTO); given empty string; then calls getCategoryId()")
     void testPageQuery_givenEmptyString_thenCallsGetCategoryId() {
         // Arrange
-        when(categoryMapper.selectPage(Mockito.<IPage<Object>>any(), Mockito.<Wrapper<Category>>any()))
+        when(categoryMapper.selectPage(Mockito.<IPage<Category>>any(), Mockito.<Wrapper<Category>>any()))
                 .thenReturn(new Page<>());
         CategoryPageQueryDTO categoryPageQueryDTO = mock(CategoryPageQueryDTO.class);
         when(categoryPageQueryDTO.getPage()).thenReturn(1);
@@ -206,7 +206,7 @@ class CategoryServiceImplDiffblueTest {
     @DisplayName("Test pageQuery(CategoryPageQueryDTO); when CategoryPageQueryDTO (default constructor) CategoryId is one")
     void testPageQuery_whenCategoryPageQueryDTOCategoryIdIsOne() {
         // Arrange
-        when(categoryMapper.selectPage(Mockito.<IPage<Object>>any(), Mockito.<Wrapper<Category>>any()))
+        when(categoryMapper.selectPage(Mockito.<IPage<Category>>any(), Mockito.<Wrapper<Category>>any()))
                 .thenReturn(new Page<>());
 
         CategoryPageQueryDTO categoryPageQueryDTO = new CategoryPageQueryDTO();
