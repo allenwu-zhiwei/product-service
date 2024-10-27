@@ -26,7 +26,7 @@ import java.util.List;
 @RequestMapping("/product")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5000")
+//@CrossOrigin(origins = "http://localhost:5000")
 public class ProductController {
 
     @Autowired
