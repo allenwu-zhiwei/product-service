@@ -55,7 +55,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     // images upload directory
     private final String UPLOAD_DIR = "static/uploadFile/";
 
-    private final String RETURN_DIR = "http://nusmall.com:8081/uploadFile/";
+    private final String RETURN_DIR = "https://nusmall.com:8081/uploadFile/";
 
     private final String PREFIX_PATH = "src/main/resources/";
 
