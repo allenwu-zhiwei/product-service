@@ -266,9 +266,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         String realPath = new String(PREFIX_PATH + UPLOAD_DIR);
         log.info("-----------file path【"+ realPath +"】-----------");
-        String format = sdf.format(new Date());
+        //String format = sdf.format(new Date());
 
-        File file1 = new File(realPath + File.separator + format);
+        File file1 = new File(realPath + File.separator );
 
         log.info("-----------absolute path【"+ file1.getAbsolutePath() +"】-----------");
         if(!file1.isDirectory()){
@@ -285,7 +285,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
             File newFile = new File(file1.getAbsolutePath() + File.separator + objectName);
             file.transferTo(newFile);
-            String filePath = RETURN_DIR + format + File.separator + objectName;
+            String filePath = RETURN_DIR + File.separator + objectName;
             log.info("-----------【"+ filePath +"】-----------");
             return filePath;
         } catch (Exception e) {
