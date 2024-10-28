@@ -133,8 +133,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             product.setAvailableStock(stock);
         }
         //get images
-        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
         for(Product product : products){
+            QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
             imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
@@ -176,8 +176,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             product.setAvailableStock(stock);
         }
         // get images
-        QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
+
         for(Product product : products){
+            QueryWrapper<ProductImage> imageQueryWrapper = new QueryWrapper<>();
             imageQueryWrapper.eq("product_id", product.getProductId());
             List<ProductImage> imageList = imageMapper.selectList(imageQueryWrapper);
             product.setProductImages(imageList);
