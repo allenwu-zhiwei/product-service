@@ -80,7 +80,7 @@ public class ProductController {
      */
     @GetMapping
     @Operation(summary = "query productInfo by productId")
-    public ApiResponse queryById(Long productId) {
+    public ApiResponse queryById(@RequestParam Long productId) {
         log.info("query productInfo by productId:{}", productId);
         ProductDTO product = productService.queryById(productId);
         return ApiResponse.success(product);
