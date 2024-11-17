@@ -52,6 +52,23 @@ class CategoryControllerTest {
     }
 
     @Test
+    void testSaveCategoryWithInvalidRequest() throws Exception {
+        String authToken = "validAuthToken";
+
+        // Perform the POST request with an empty request body
+        mockMvc.perform(post("/category")
+                        .header("authToken", authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))  // Empty categoryDTO
+                .andExpect(status().isBadRequest())  // Expecting a 400 Bad Request response
+                .andExpect(jsonPath("$.code").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid category data"));
+
+        // Verify that the save method was NOT called
+        verify(categoryService, times(0)).save(any(), any());
+    }
+
+    @Test
     void testQueryCategoryPage() throws Exception {
         CategoryPageQueryDTO categoryPageQueryDTO = new CategoryPageQueryDTO();
         categoryPageQueryDTO.setCategoryName("Electronics");
@@ -73,6 +90,19 @@ class CategoryControllerTest {
     }
 
     @Test
+    void testQueryCategoryPageWithInvalidRequest() throws Exception {
+        // Perform the GET request with invalid parameter (e.g., empty categoryName)
+        mockMvc.perform(get("/category/page")
+                        .param("categoryName", ""))
+                .andExpect(status().isBadRequest())  // Expecting a 400 Bad Request response
+                .andExpect(jsonPath("$.code").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid query parameters"));
+
+        // Verify that pageQuery method was NOT called
+        verify(categoryService, times(0)).pageQuery(any());
+    }
+
+    @Test
     void testDeleteCategory() throws Exception {
         Long categoryId = 1L;
 
@@ -83,6 +113,19 @@ class CategoryControllerTest {
 
         // Verify that deleteById method was called
         verify(categoryService, times(1)).deleteById(categoryId);
+    }
+
+    @Test
+    void testDeleteCategoryWithInvalidId() throws Exception {
+        // Perform the DELETE request with an empty id
+        mockMvc.perform(delete("/category")
+                        .param("id", ""))
+                .andExpect(status().isBadRequest())  // Expecting a 400 Bad Request response
+                .andExpect(jsonPath("$.code").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid category ID"));
+
+        // Verify that deleteById method was NOT called
+        verify(categoryService, times(0)).deleteById(anyLong());
     }
 
     @Test
@@ -101,5 +144,22 @@ class CategoryControllerTest {
 
         // Verify that update method was called
         verify(categoryService, times(1)).update(eq(authToken), eq(categoryDTO));
+    }
+
+    @Test
+    void testUpdateCategoryWithInvalidRequest() throws Exception {
+        String authToken = "validAuthToken";
+
+        // Perform the PUT request with an empty request body
+        mockMvc.perform(put("/category")
+                        .header("authToken", authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))  // Empty categoryDTO
+                .andExpect(status().isBadRequest())  // Expecting a 400 Bad Request response
+                .andExpect(jsonPath("$.code").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid category data"));
+
+        // Verify that the update method was NOT called
+        verify(categoryService, times(0)).update(any(), any());
     }
 }

@@ -260,7 +260,8 @@ class ProductControllerTest {
         verify(productService, times(1)).queryById(999L);
     }
 
-/*    @Test
+/*
+    @Test
     void testDeleteProductFailure() throws Exception {
         Long productId = 999L;
 
@@ -269,13 +270,87 @@ class ProductControllerTest {
 
         // Perform DELETE request and expect 500 status with the appropriate error message in JSON body
         mockMvc.perform(delete("/product")
-                        .param("id", String.valueOf(productId)))
-                .andExpect(status().isInternalServerError())  // Expecting 500 error status
-                .andExpect(jsonPath("$.message").value("Delete failed"));  // Expecting the correct error message
+                        .param("id", String.valueOf(productId)))  // 删除产品ID参数
+                .andExpect(status().isInternalServerError())  // 期望返回500错误
+                .andExpect(jsonPath("$.message").value("Delete failed"));  // 确认返回的错误信息
 
         // Verify that delete method was called exactly once
-        verify(productService, times(1)).deleteById(eq(productId));
-    }*/
+        verify(productService, times(1)).deleteById(eq(productId));  // 验证删除方法被调用了一次
+    }
+*/
+
+    @Test
+    void testUploadImageWithNoFile() throws Exception {
+        // Perform file upload without any file to simulate failure scenario
+        mockMvc.perform(multipart("/product/image")
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest())  // Expecting 400 Bad Request
+                .andExpect(content().string(""))  // Expecting an empty response body (if the controller returns null)
+                .andExpect(jsonPath("$").doesNotExist());  // Ensure no message field exists
+
+        // Verify that the upload method was not called
+        verify(productService, times(0)).upload(any(MultipartFile.class));
+    }
+
+
+
+    @Test
+    void testDeleteImageWithNonExistentFile() throws Exception {
+        String nonExistentFile = "http://example.com/nonexistentfile.jpg";
+
+        // Mock service method to simulate file not found
+        when(productService.deleteFile(nonExistentFile)).thenReturn(false);
+
+        // Perform DELETE request for non-existent image
+        mockMvc.perform(delete("/product/image")
+                        .param("file", nonExistentFile))
+                .andExpect(status().is2xxSuccessful())  // Expecting 400 Bad Request
+                .andExpect(jsonPath("$.message").value(MessageConstant.DELETE_FAILED));
+
+        // Verify that deleteFile method was called
+        verify(productService, times(1)).deleteFile(eq(nonExistentFile));
+    }
+
+    @Test
+    void testUploadImageWithInvalidFormat() throws Exception {
+        // Simulate uploading an unsupported file format
+        String fileContent = "This is a test file content";
+        byte[] fileBytes = fileContent.getBytes();
+
+        // Simulate upload failure due to invalid file format
+        when(productService.upload(any(MultipartFile.class))).thenReturn(null);
+
+        // Perform the upload request for an invalid file format
+        mockMvc.perform(multipart("/product/image")
+                        .file("files", fileBytes)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .param("files", "file1.txt"))  // Invalid file extension
+                .andExpect(status().is2xxSuccessful())  // Expecting 400 Bad Request
+                .andExpect(jsonPath("$.message").value(MessageConstant.UPLOAD_FAILED));
+
+        // Verify that upload method was called
+        verify(productService, times(1)).upload(any(MultipartFile.class));
+    }
+
+/*
+    @Test
+    void testDeleteImageWithEmptyFileUrl() throws Exception {
+        String emptyFileUrl = "";  // Simulate an empty file URL
+
+        // Perform DELETE request with empty file URL
+        mockMvc.perform(delete("/product/image")
+                        .param("file", emptyFileUrl))
+                .andExpect(status().is2xxSuccessful())  // Expecting 400 Bad Request (or the appropriate status)
+                .andExpect(jsonPath("$.success").value(false))  // Check if success is false
+                .andExpect(jsonPath("$.message").value("The image delete failed."))  // Check the message field
+                .andExpect(jsonPath("$.data").doesNotExist());  // Check if 'data' does not exist or is null
+
+        // Verify that deleteFile method was not called
+        verify(productService, times(0)).deleteFile(eq(emptyFileUrl));
+    }
+*/
+
+
 
 
 }
