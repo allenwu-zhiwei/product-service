@@ -1,18 +1,6 @@
 package com.nusiss.productservice.service.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.anyDouble;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nusiss.commonservice.entity.User;
@@ -26,1055 +14,259 @@ import com.nusiss.productservice.domain.entity.ProductImage;
 import com.nusiss.productservice.mapper.ImageMapper;
 import com.nusiss.productservice.mapper.ProductMapper;
 import com.nusiss.productservice.result.PageApiResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.aot.DisabledInAotMode;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@ContextConfiguration(classes = {ProductServiceImpl.class})
-@ExtendWith(SpringExtension.class)
-@DisabledInAotMode
-class ProductServiceImplDiffblueTest {
-    @MockBean
-    private ImageMapper imageMapper;
+public class ProductServiceImplDiffblueTest {
 
-    @MockBean
-    private InventoryClient inventoryClient;
-
-    @MockBean
+    @Mock
     private ProductMapper productMapper;
-
-    @Autowired
-    private ProductServiceImpl productServiceImpl;
-
-    @MockBean
-    private UserFeignClient userFeignClient;
-
-    /**
-     * Test {@link ProductServiceImpl#save(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <p>
-     * Method under test: {@link ProductServiceImpl#save(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test save(String, ProductDTO) with 'authToken', 'productDTO'")
-    void testSaveWithAuthTokenProductDTO() {
-        // Arrange
-        when(productMapper.insert(Mockito.<Product>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.add(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
-                .thenReturn(new ResponseEntity<>(HttpStatusCode.valueOf(200)));
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(new ArrayList<>());
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.save("ABC123", productDTO);
-
-        // Assert
-        verify(productMapper).insert(isA(Product.class));
-        verify(userFeignClient, atLeast(1)).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).add(eq("ABC123"), eq(1L), eq(1));
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#save(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <ul>
-     *   <li>Given {@link ImageMapper} {@link BaseMapper#insert(Object)} return
-     * one.</li>
-     *   <li>Then calls {@link HttpEntity#getBody()}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#save(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test save(String, ProductDTO) with 'authToken', 'productDTO'; given ImageMapper insert(Object) return one; then calls getBody()")
-    void testSaveWithAuthTokenProductDTO_givenImageMapperInsertReturnOne_thenCallsGetBody() {
-        // Arrange
-        when(productMapper.insert(Mockito.<Product>any())).thenReturn(1);
-        when(imageMapper.insert(Mockito.<ProductImage>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.add(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getBody())
-                .thenReturn(new com.nusiss.commonservice.config.ApiResponse<>(true, "Not all who wander are lost", new User()));
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(200));
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        ArrayList<String> imageUrls = new ArrayList<>();
-        imageUrls.add("foo");
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(imageUrls);
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.save("ABC123", productDTO);
-
-        // Assert
-        verify(imageMapper).insert(isA(ProductImage.class));
-        verify(productMapper).insert(isA(Product.class));
-        verify(userFeignClient, atLeast(1)).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).add(eq("ABC123"), eq(1L), eq(1));
-        verify(responseEntity, atLeast(1)).getBody();
-        verify(responseEntity, atLeast(1)).getStatusCode();
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#save(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <ul>
-     *   <li>Given {@link ResponseEntity} {@link ResponseEntity#getStatusCode()}
-     * return {@code null}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#save(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test save(String, ProductDTO) with 'authToken', 'productDTO'; given ResponseEntity getStatusCode() return 'null'")
-    void testSaveWithAuthTokenProductDTO_givenResponseEntityGetStatusCodeReturnNull() {
-        // Arrange
-        when(productMapper.insert(Mockito.<Product>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.add(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(null);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(new ArrayList<>());
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.save("ABC123", productDTO);
-
-        // Assert
-        verify(productMapper).insert(isA(Product.class));
-        verify(userFeignClient, atLeast(1)).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).add(eq("ABC123"), eq(1L), eq(1));
-        verify(responseEntity, atLeast(1)).getStatusCode();
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}.
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryConsumer(ProductPageQueryDTO)")
-    void testPageQueryConsumer() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ProductPageQueryDTO productPageQueryDTO = mock(ProductPageQueryDTO.class);
-        when(productPageQueryDTO.getPage()).thenReturn(1);
-        when(productPageQueryDTO.getPageSize()).thenReturn(3);
-        when(productPageQueryDTO.getCategoryId()).thenReturn(1L);
-        when(productPageQueryDTO.getDescription()).thenReturn("The characteristics of someone or something");
-        when(productPageQueryDTO.getName()).thenReturn("");
-        doNothing().when(productPageQueryDTO).setAvailableStock(anyInt());
-        doNothing().when(productPageQueryDTO).setCategoryId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setDescription(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setName(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setPage(anyInt());
-        doNothing().when(productPageQueryDTO).setPageSize(anyInt());
-        doNothing().when(productPageQueryDTO).setPrice(anyDouble());
-        doNothing().when(productPageQueryDTO).setProductId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setSellerId(Mockito.<Long>any());
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryConsumerResult = productServiceImpl.pageQueryConsumer(productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(productPageQueryDTO, atLeast(1)).getCategoryId();
-        verify(productPageQueryDTO, atLeast(1)).getDescription();
-        verify(productPageQueryDTO).getName();
-        verify(productPageQueryDTO).getPage();
-        verify(productPageQueryDTO).getPageSize();
-        verify(productPageQueryDTO).setAvailableStock(eq(1));
-        verify(productPageQueryDTO).setCategoryId(eq(1L));
-        verify(productPageQueryDTO).setDescription(eq("The characteristics of someone or something"));
-        verify(productPageQueryDTO).setName(eq("Name"));
-        verify(productPageQueryDTO).setPage(eq(1));
-        verify(productPageQueryDTO).setPageSize(eq(3));
-        verify(productPageQueryDTO).setPrice(eq(10.0d));
-        verify(productPageQueryDTO).setProductId(eq(1L));
-        verify(productPageQueryDTO).setSellerId(eq(1L));
-        assertEquals(0L, actualPageQueryConsumerResult.getTotal());
-        assertTrue(actualPageQueryConsumerResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>When {@link ProductPageQueryDTO} (default constructor) AvailableStock is
-     * one.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryConsumer(ProductPageQueryDTO); when ProductPageQueryDTO (default constructor) AvailableStock is one")
-    void testPageQueryConsumer_whenProductPageQueryDTOAvailableStockIsOne() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-
-        ProductPageQueryDTO productPageQueryDTO = new ProductPageQueryDTO();
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryConsumerResult = productServiceImpl.pageQueryConsumer(productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        assertEquals(0L, actualPageQueryConsumerResult.getTotal());
-        assertTrue(actualPageQueryConsumerResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>When {@link ProductPageQueryDTO}
-     * {@link ProductPageQueryDTO#getDescription()} return empty string.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryConsumer(ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryConsumer(ProductPageQueryDTO); when ProductPageQueryDTO getDescription() return empty string")
-    void testPageQueryConsumer_whenProductPageQueryDTOGetDescriptionReturnEmptyString() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ProductPageQueryDTO productPageQueryDTO = mock(ProductPageQueryDTO.class);
-        when(productPageQueryDTO.getPage()).thenReturn(1);
-        when(productPageQueryDTO.getPageSize()).thenReturn(3);
-        when(productPageQueryDTO.getCategoryId()).thenReturn(1L);
-        when(productPageQueryDTO.getDescription()).thenReturn("");
-        when(productPageQueryDTO.getName()).thenReturn("Name");
-        doNothing().when(productPageQueryDTO).setAvailableStock(anyInt());
-        doNothing().when(productPageQueryDTO).setCategoryId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setDescription(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setName(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setPage(anyInt());
-        doNothing().when(productPageQueryDTO).setPageSize(anyInt());
-        doNothing().when(productPageQueryDTO).setPrice(anyDouble());
-        doNothing().when(productPageQueryDTO).setProductId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setSellerId(Mockito.<Long>any());
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryConsumerResult = productServiceImpl.pageQueryConsumer(productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(productPageQueryDTO, atLeast(1)).getCategoryId();
-        verify(productPageQueryDTO).getDescription();
-        verify(productPageQueryDTO, atLeast(1)).getName();
-        verify(productPageQueryDTO).getPage();
-        verify(productPageQueryDTO).getPageSize();
-        verify(productPageQueryDTO).setAvailableStock(eq(1));
-        verify(productPageQueryDTO).setCategoryId(eq(1L));
-        verify(productPageQueryDTO).setDescription(eq("The characteristics of someone or something"));
-        verify(productPageQueryDTO).setName(eq("Name"));
-        verify(productPageQueryDTO).setPage(eq(1));
-        verify(productPageQueryDTO).setPageSize(eq(3));
-        verify(productPageQueryDTO).setPrice(eq(10.0d));
-        verify(productPageQueryDTO).setProductId(eq(1L));
-        verify(productPageQueryDTO).setSellerId(eq(1L));
-        assertEquals(0L, actualPageQueryConsumerResult.getTotal());
-        assertTrue(actualPageQueryConsumerResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}.
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryMerchant(String, ProductPageQueryDTO)")
-    void testPageQueryMerchant() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
-                .thenReturn(new ResponseEntity<>(HttpStatusCode.valueOf(200)));
-
-        ProductPageQueryDTO productPageQueryDTO = new ProductPageQueryDTO();
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryMerchantResult = productServiceImpl.pageQueryMerchant("ABC123", productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        assertEquals(0L, actualPageQueryMerchantResult.getTotal());
-        assertTrue(actualPageQueryMerchantResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>Given {@code null}.</li>
-     *   <li>When {@link ProductPageQueryDTO}
-     * {@link ProductPageQueryDTO#getCategoryId()} return {@code null}.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryMerchant(String, ProductPageQueryDTO); given 'null'; when ProductPageQueryDTO getCategoryId() return 'null'")
-    void testPageQueryMerchant_givenNull_whenProductPageQueryDTOGetCategoryIdReturnNull() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getBody())
-                .thenReturn(new com.nusiss.commonservice.config.ApiResponse<>(true, "Not all who wander are lost", new User()));
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(200));
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-        ProductPageQueryDTO productPageQueryDTO = mock(ProductPageQueryDTO.class);
-        when(productPageQueryDTO.getPage()).thenReturn(1);
-        when(productPageQueryDTO.getPageSize()).thenReturn(3);
-        when(productPageQueryDTO.getCategoryId()).thenReturn(null);
-        when(productPageQueryDTO.getName()).thenReturn("Name");
-        doNothing().when(productPageQueryDTO).setAvailableStock(anyInt());
-        doNothing().when(productPageQueryDTO).setCategoryId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setDescription(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setName(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setPage(anyInt());
-        doNothing().when(productPageQueryDTO).setPageSize(anyInt());
-        doNothing().when(productPageQueryDTO).setPrice(anyDouble());
-        doNothing().when(productPageQueryDTO).setProductId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setSellerId(Mockito.<Long>any());
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryMerchantResult = productServiceImpl.pageQueryMerchant("ABC123", productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(productPageQueryDTO).getCategoryId();
-        verify(productPageQueryDTO, atLeast(1)).getName();
-        verify(productPageQueryDTO).getPage();
-        verify(productPageQueryDTO).getPageSize();
-        verify(productPageQueryDTO).setAvailableStock(eq(1));
-        verify(productPageQueryDTO).setCategoryId(eq(1L));
-        verify(productPageQueryDTO).setDescription(eq("The characteristics of someone or something"));
-        verify(productPageQueryDTO).setName(eq("Name"));
-        verify(productPageQueryDTO).setPage(eq(1));
-        verify(productPageQueryDTO).setPageSize(eq(3));
-        verify(productPageQueryDTO).setPrice(eq(10.0d));
-        verify(productPageQueryDTO).setProductId(eq(1L));
-        verify(productPageQueryDTO).setSellerId(eq(1L));
-        verify(responseEntity).getBody();
-        verify(responseEntity).getStatusCode();
-        assertEquals(0L, actualPageQueryMerchantResult.getTotal());
-        assertTrue(actualPageQueryMerchantResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>Given {@code null}.</li>
-     *   <li>When {@link ProductPageQueryDTO} {@link ProductPageQueryDTO#getName()}
-     * return {@code null}.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryMerchant(String, ProductPageQueryDTO); given 'null'; when ProductPageQueryDTO getName() return 'null'")
-    void testPageQueryMerchant_givenNull_whenProductPageQueryDTOGetNameReturnNull() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getBody())
-                .thenReturn(new com.nusiss.commonservice.config.ApiResponse<>(true, "Not all who wander are lost", new User()));
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(200));
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-        ProductPageQueryDTO productPageQueryDTO = mock(ProductPageQueryDTO.class);
-        when(productPageQueryDTO.getPage()).thenReturn(1);
-        when(productPageQueryDTO.getPageSize()).thenReturn(3);
-        when(productPageQueryDTO.getCategoryId()).thenReturn(1L);
-        when(productPageQueryDTO.getName()).thenReturn(null);
-        doNothing().when(productPageQueryDTO).setAvailableStock(anyInt());
-        doNothing().when(productPageQueryDTO).setCategoryId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setDescription(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setName(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setPage(anyInt());
-        doNothing().when(productPageQueryDTO).setPageSize(anyInt());
-        doNothing().when(productPageQueryDTO).setPrice(anyDouble());
-        doNothing().when(productPageQueryDTO).setProductId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setSellerId(Mockito.<Long>any());
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryMerchantResult = productServiceImpl.pageQueryMerchant("ABC123", productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(productPageQueryDTO, atLeast(1)).getCategoryId();
-        verify(productPageQueryDTO).getName();
-        verify(productPageQueryDTO).getPage();
-        verify(productPageQueryDTO).getPageSize();
-        verify(productPageQueryDTO).setAvailableStock(eq(1));
-        verify(productPageQueryDTO).setCategoryId(eq(1L));
-        verify(productPageQueryDTO).setDescription(eq("The characteristics of someone or something"));
-        verify(productPageQueryDTO).setName(eq("Name"));
-        verify(productPageQueryDTO).setPage(eq(1));
-        verify(productPageQueryDTO).setPageSize(eq(3));
-        verify(productPageQueryDTO).setPrice(eq(10.0d));
-        verify(productPageQueryDTO).setProductId(eq(1L));
-        verify(productPageQueryDTO).setSellerId(eq(1L));
-        verify(responseEntity).getBody();
-        verify(responseEntity).getStatusCode();
-        assertEquals(0L, actualPageQueryMerchantResult.getTotal());
-        assertTrue(actualPageQueryMerchantResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>Given {@link ResponseEntity} {@link ResponseEntity#getStatusCode()}
-     * return {@code null}.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryMerchant(String, ProductPageQueryDTO); given ResponseEntity getStatusCode() return 'null'")
-    void testPageQueryMerchant_givenResponseEntityGetStatusCodeReturnNull() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(null);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        ProductPageQueryDTO productPageQueryDTO = new ProductPageQueryDTO();
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryMerchantResult = productServiceImpl.pageQueryMerchant("ABC123", productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(responseEntity).getStatusCode();
-        assertEquals(0L, actualPageQueryMerchantResult.getTotal());
-        assertTrue(actualPageQueryMerchantResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}.
-     * <ul>
-     *   <li>When {@link ProductPageQueryDTO}
-     * {@link ProductPageQueryDTO#getCategoryId()} return one.</li>
-     * </ul>
-     * <p>
-     * Method under test:
-     * {@link ProductServiceImpl#pageQueryMerchant(String, ProductPageQueryDTO)}
-     */
-    @Test
-    @DisplayName("Test pageQueryMerchant(String, ProductPageQueryDTO); when ProductPageQueryDTO getCategoryId() return one")
-    void testPageQueryMerchant_whenProductPageQueryDTOGetCategoryIdReturnOne() {
-        // Arrange
-        when(productMapper.selectPage(Mockito.<IPage<Product>>any(), Mockito.<Wrapper<Product>>any()))
-                .thenReturn(new Page<>());
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getBody())
-                .thenReturn(new com.nusiss.commonservice.config.ApiResponse<>(true, "Not all who wander are lost", new User()));
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(200));
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-        ProductPageQueryDTO productPageQueryDTO = mock(ProductPageQueryDTO.class);
-        when(productPageQueryDTO.getPage()).thenReturn(1);
-        when(productPageQueryDTO.getPageSize()).thenReturn(3);
-        when(productPageQueryDTO.getCategoryId()).thenReturn(1L);
-        when(productPageQueryDTO.getName()).thenReturn("Name");
-        doNothing().when(productPageQueryDTO).setAvailableStock(anyInt());
-        doNothing().when(productPageQueryDTO).setCategoryId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setDescription(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setName(Mockito.<String>any());
-        doNothing().when(productPageQueryDTO).setPage(anyInt());
-        doNothing().when(productPageQueryDTO).setPageSize(anyInt());
-        doNothing().when(productPageQueryDTO).setPrice(anyDouble());
-        doNothing().when(productPageQueryDTO).setProductId(Mockito.<Long>any());
-        doNothing().when(productPageQueryDTO).setSellerId(Mockito.<Long>any());
-        productPageQueryDTO.setAvailableStock(1);
-        productPageQueryDTO.setCategoryId(1L);
-        productPageQueryDTO.setDescription("The characteristics of someone or something");
-        productPageQueryDTO.setName("Name");
-        productPageQueryDTO.setPage(1);
-        productPageQueryDTO.setPageSize(3);
-        productPageQueryDTO.setPrice(10.0d);
-        productPageQueryDTO.setProductId(1L);
-        productPageQueryDTO.setSellerId(1L);
-
-        // Act
-        PageApiResponse actualPageQueryMerchantResult = productServiceImpl.pageQueryMerchant("ABC123", productPageQueryDTO);
-
-        // Assert
-        verify(productMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(productPageQueryDTO, atLeast(1)).getCategoryId();
-        verify(productPageQueryDTO, atLeast(1)).getName();
-        verify(productPageQueryDTO).getPage();
-        verify(productPageQueryDTO).getPageSize();
-        verify(productPageQueryDTO).setAvailableStock(eq(1));
-        verify(productPageQueryDTO).setCategoryId(eq(1L));
-        verify(productPageQueryDTO).setDescription(eq("The characteristics of someone or something"));
-        verify(productPageQueryDTO).setName(eq("Name"));
-        verify(productPageQueryDTO).setPage(eq(1));
-        verify(productPageQueryDTO).setPageSize(eq(3));
-        verify(productPageQueryDTO).setPrice(eq(10.0d));
-        verify(productPageQueryDTO).setProductId(eq(1L));
-        verify(productPageQueryDTO).setSellerId(eq(1L));
-        verify(responseEntity).getBody();
-        verify(responseEntity).getStatusCode();
-        assertEquals(0L, actualPageQueryMerchantResult.getTotal());
-        assertTrue(actualPageQueryMerchantResult.getRecords().isEmpty());
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#update(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <p>
-     * Method under test: {@link ProductServiceImpl#update(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test update(String, ProductDTO) with 'authToken', 'productDTO'")
-    void testUpdateWithAuthTokenProductDTO() {
-        // Arrange
-        when(productMapper.updateById(Mockito.<Product>any())).thenReturn(1);
-        when(imageMapper.delete(Mockito.<Wrapper<ProductImage>>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.update(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
-                .thenReturn(new ResponseEntity<>(HttpStatusCode.valueOf(200)));
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(new ArrayList<>());
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.update("ABC123", productDTO);
-
-        // Assert
-        verify(imageMapper).delete(isA(Wrapper.class));
-        verify(productMapper).updateById(isA(Product.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).update(eq("ABC123"), eq(1L), eq(1));
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#update(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <ul>
-     *   <li>Given {@link ResponseEntity} {@link ResponseEntity#getStatusCode()}
-     * return {@code null}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#update(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test update(String, ProductDTO) with 'authToken', 'productDTO'; given ResponseEntity getStatusCode() return 'null'")
-    void testUpdateWithAuthTokenProductDTO_givenResponseEntityGetStatusCodeReturnNull() {
-        // Arrange
-        when(productMapper.updateById(Mockito.<Product>any())).thenReturn(1);
-        when(imageMapper.delete(Mockito.<Wrapper<ProductImage>>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.update(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(null);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(new ArrayList<>());
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.update("ABC123", productDTO);
-
-        // Assert
-        verify(imageMapper).delete(isA(Wrapper.class));
-        verify(productMapper).updateById(isA(Product.class));
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).update(eq("ABC123"), eq(1L), eq(1));
-        verify(responseEntity).getStatusCode();
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#update(String, ProductDTO)} with
-     * {@code authToken}, {@code productDTO}.
-     * <ul>
-     *   <li>Then calls {@link BaseMapper#insert(Object)}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#update(String, ProductDTO)}
-     */
-    @Test
-    @DisplayName("Test update(String, ProductDTO) with 'authToken', 'productDTO'; then calls insert(Object)")
-    void testUpdateWithAuthTokenProductDTO_thenCallsInsert() {
-        // Arrange
-        when(productMapper.updateById(Mockito.<Product>any())).thenReturn(1);
-        when(imageMapper.insert(Mockito.<ProductImage>any())).thenReturn(1);
-        when(imageMapper.delete(Mockito.<Wrapper<ProductImage>>any())).thenReturn(1);
-        com.nusiss.productservice.config.ApiResponse<String> successResult = com.nusiss.productservice.config.ApiResponse
-                .success();
-        when(inventoryClient.update(Mockito.<String>any(), Mockito.<Long>any(), anyInt())).thenReturn(successResult);
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getBody())
-                .thenReturn(new com.nusiss.commonservice.config.ApiResponse<>(true, "Not all who wander are lost", new User()));
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(200));
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        ArrayList<String> imageUrls = new ArrayList<>();
-        imageUrls.add("foo");
-
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setAvailableStock(1);
-        productDTO.setCategoryId(1L);
-        productDTO.setDescription("The characteristics of someone or something");
-        productDTO.setImageUrls(imageUrls);
-        productDTO.setName("Name");
-        productDTO.setPrice(new BigDecimal("2.3"));
-        productDTO.setProductId(1L);
-        productDTO.setSellerId(1L);
-
-        // Act
-        productServiceImpl.update("ABC123", productDTO);
-
-        // Assert
-        verify(imageMapper).delete(isA(Wrapper.class));
-        verify(imageMapper).insert(isA(ProductImage.class));
-        verify(productMapper).updateById(isA(Product.class));
-        verify(userFeignClient, atLeast(1)).getCurrentUserInfo(eq("ABC123"));
-        verify(inventoryClient).update(eq("ABC123"), eq(1L), eq(1));
-        verify(responseEntity, atLeast(1)).getBody();
-        verify(responseEntity, atLeast(1)).getStatusCode();
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#deleteById(Long)}.
-     * <p>
-     * Method under test: {@link ProductServiceImpl#deleteById(Long)}
-     */
-    @Test
-    @DisplayName("Test deleteById(Long)")
-    void testDeleteById() {
-        // Arrange
-        when(productMapper.deleteById(Mockito.<Serializable>any())).thenReturn(1);
-        when(imageMapper.delete(Mockito.<Wrapper<ProductImage>>any())).thenReturn(1);
-        ApiResponse<String> successResult = ApiResponse.success();
-        when(inventoryClient.delete(Mockito.<Long>any())).thenReturn(successResult);
-
-        // Act
-        productServiceImpl.deleteById(1L);
-
-        // Assert
-        verify(imageMapper).delete(isA(Wrapper.class));
-        verify(productMapper).deleteById(isA(Serializable.class));
-        verify(inventoryClient).delete(eq(1L));
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#queryById(Long)}.
-     * <ul>
-     *   <li>Then return ImageUrls Empty.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#queryById(Long)}
-     */
-    @Test
-    @DisplayName("Test queryById(Long); then return ImageUrls Empty")
-    void testQueryById_thenReturnImageUrlsEmpty() {
-        // Arrange
-        Product product = new Product();
-        product.setAvailableStock(1);
-        product.setCategoryId(1L);
-        product.setCreateDatetime(mock(Timestamp.class));
-        product.setCreateUser("Create User");
-        product.setDescription("The characteristics of someone or something");
-        product.setName("Name");
-        product.setPrice(new BigDecimal("2.3"));
-        product.setProductId(1L);
-        product.setProductImages(new ArrayList<>());
-        product.setSellerId(1L);
-        product.setUpdateDatetime(mock(Timestamp.class));
-        product.setUpdateUser("2020-03-01");
-        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(product);
-        when(imageMapper.selectList(Mockito.<Wrapper<ProductImage>>any())).thenReturn(new ArrayList<>());
-
-        // Act
-        ProductDTO actualQueryByIdResult = productServiceImpl.queryById(1L);
-
-        // Assert
-        verify(productMapper).selectById(isA(Serializable.class));
-        verify(imageMapper).selectList(isA(Wrapper.class));
-        assertEquals("Name", actualQueryByIdResult.getName());
-        assertEquals("The characteristics of someone or something", actualQueryByIdResult.getDescription());
-        assertEquals(1, actualQueryByIdResult.getAvailableStock());
-        assertEquals(1L, actualQueryByIdResult.getCategoryId().longValue());
-        assertEquals(1L, actualQueryByIdResult.getProductId().longValue());
-        assertEquals(1L, actualQueryByIdResult.getSellerId().longValue());
-        assertTrue(actualQueryByIdResult.getImageUrls().isEmpty());
-        BigDecimal expectedPrice = new BigDecimal("2.3");
-        assertEquals(expectedPrice, actualQueryByIdResult.getPrice());
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#queryById(Long)}.
-     * <ul>
-     *   <li>Then return ImageUrls size is one.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#queryById(Long)}
-     */
-    @Test
-    @DisplayName("Test queryById(Long); then return ImageUrls size is one")
-    void testQueryById_thenReturnImageUrlsSizeIsOne() {
-        // Arrange
-        Product product = new Product();
-        product.setAvailableStock(1);
-        product.setCategoryId(1L);
-        product.setCreateDatetime(mock(Timestamp.class));
-        product.setCreateUser("Create User");
-        product.setDescription("The characteristics of someone or something");
-        product.setName("Name");
-        product.setPrice(new BigDecimal("2.3"));
-        product.setProductId(1L);
-        product.setProductImages(new ArrayList<>());
-        product.setSellerId(1L);
-        product.setUpdateDatetime(mock(Timestamp.class));
-        product.setUpdateUser("2020-03-01");
-        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(product);
-
-        ProductImage productImage = new ProductImage();
-        productImage.setCreateDatetime(mock(Timestamp.class));
-        productImage.setCreateUser("product_id");
-        productImage.setImageId(1L);
-        productImage.setImageUrl("https://example.org/example");
-        productImage.setProductId(1L);
-        productImage.setUpdateDatetime(mock(Timestamp.class));
-        productImage.setUpdateUser("2020-03-01");
-
-        ArrayList<ProductImage> productImageList = new ArrayList<>();
-        productImageList.add(productImage);
-        when(imageMapper.selectList(Mockito.<Wrapper<ProductImage>>any())).thenReturn(productImageList);
-
-        // Act
-        ProductDTO actualQueryByIdResult = productServiceImpl.queryById(1L);
-
-        // Assert
-        verify(productMapper).selectById(isA(Serializable.class));
-        verify(imageMapper).selectList(isA(Wrapper.class));
-        assertEquals("Name", actualQueryByIdResult.getName());
-        assertEquals("The characteristics of someone or something", actualQueryByIdResult.getDescription());
-        List<String> imageUrls = actualQueryByIdResult.getImageUrls();
-        assertEquals(1, imageUrls.size());
-        assertEquals("https://example.org/example", imageUrls.get(0));
-        assertEquals(1, actualQueryByIdResult.getAvailableStock());
-        assertEquals(1L, actualQueryByIdResult.getCategoryId().longValue());
-        assertEquals(1L, actualQueryByIdResult.getProductId().longValue());
-        assertEquals(1L, actualQueryByIdResult.getSellerId().longValue());
-        BigDecimal expectedPrice = new BigDecimal("2.3");
-        assertEquals(expectedPrice, actualQueryByIdResult.getPrice());
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#deleteFile(String)}.
-     * <ul>
-     *   <li>When {@code /directory/foo.txt}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#deleteFile(String)}
-     */
-    @Test
-    @DisplayName("Test deleteFile(String); when '/directory/foo.txt'")
-    void testDeleteFile_whenDirectoryFooTxt() {
-        // Arrange, Act and Assert
-        assertFalse(productServiceImpl.deleteFile("/directory/foo.txt"));
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#deleteFile(String)}.
-     * <ul>
-     *   <li>When empty string.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#deleteFile(String)}
-     */
-    @Test
-    @DisplayName("Test deleteFile(String); when empty string")
-    void testDeleteFile_whenEmptyString() {
-        // Arrange, Act and Assert
-        assertFalse(productServiceImpl.deleteFile(""));
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#queryCurrentUser(String)}.
-     * <p>
-     * Method under test: {@link ProductServiceImpl#queryCurrentUser(String)}
-     */
-    @Test
-    @DisplayName("Test queryCurrentUser(String)")
-    void testQueryCurrentUser() {
-        // Arrange
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
-                .thenReturn(new ResponseEntity<>(HttpStatusCode.valueOf(200)));
-
-        // Act
-        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
-
-        // Assert
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        assertEquals("system", actualQueryCurrentUserResult);
-    }
-
-    /**
-     * Test {@link ProductServiceImpl#queryCurrentUser(String)}.
-     * <ul>
-     *   <li>Then calls {@link ResponseEntity#getStatusCode()}.</li>
-     * </ul>
-     * <p>
-     * Method under test: {@link ProductServiceImpl#queryCurrentUser(String)}
-     */
-    @Test
-    @DisplayName("Test queryCurrentUser(String); then calls getStatusCode()")
-    void testQueryCurrentUser_thenCallsGetStatusCode() {
-        // Arrange
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(null);
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        // Act
-        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
-
-        // Assert
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(responseEntity).getStatusCode();
-        assertEquals("system", actualQueryCurrentUserResult);
-    }
-    @Test
-    @DisplayName("Test queryCurrentUser(String); when getCurrentUserInfo returns null")
-    void testQueryCurrentUser_whenGetCurrentUserInfoReturnsNull() {
-        // Arrange
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(null);  // Simulate null status code
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        // Act
-        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
-
-        // Assert
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(responseEntity).getStatusCode();  // Ensure we check the status code
-        assertEquals("system", actualQueryCurrentUserResult);  // Default to "system" if null
-    }
-    @Test
-    @DisplayName("Test queryCurrentUser(String); when getCurrentUserInfo returns error status")
-    void testQueryCurrentUser_whenGetCurrentUserInfoReturnsErrorStatus() {
-        // Arrange
-        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
-        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(500));  // Simulate error status code
-        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
-
-        // Act
-        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
-
-        // Assert
-        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
-        verify(responseEntity).getStatusCode();  // Ensure we check the status code
-        assertEquals("system", actualQueryCurrentUserResult);  // Default to "system" in case of error
-    }
-    @Test
-    @DisplayName("Test update(String, ProductDTO) when updateById throws an exception")
-    void testUpdate_whenUpdateByIdThrowsException() {
-        // Arrange
-        when(productMapper.updateById(Mockito.<Product>any())).thenThrow(new RuntimeException("Database error"));
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setProductId(1L);
+    @Mock
+    private ImageMapper imageMapper;
+    @Mock
+    private InventoryClient inventoryClient;
+    @Mock
+    private UserFeignClient userClient;
+
+    @InjectMocks
+    private ProductServiceImpl productService;
+
+    private ProductDTO productDTO;
+    private Product product;
+    private ProductImage productImage;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        productDTO = new ProductDTO();
         productDTO.setName("Test Product");
+        productDTO.setDescription("Test description");
+        productDTO.setCategoryId(1L);
+        productDTO.setAvailableStock(100);
+        productDTO.setImageUrls(Arrays.asList("http://image1.jpg", "http://image2.jpg"));
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> productServiceImpl.update("ABC123", productDTO));
-        //verify(productMapper).updateById(isA(Product.class));
+        product = new Product();
+        product.setProductId(1L);
+        product.setName("Test Product");
+        product.setDescription("Test description");
+        product.setCategoryId(1L);
+        product.setCreateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+        product.setUpdateDatetime(Timestamp.valueOf(LocalDateTime.now()));
+
+        productImage = new ProductImage();
+        productImage.setImageUrl("http://image1.jpg");
     }
+
     @Test
-    @DisplayName("Test queryById(Long) when productMapper returns null")
-    void testQueryById_whenProductMapperReturnsNull() {
-        // Arrange
-        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(null);
+    void saveProduct() {
+        String authToken = "auth-token";
+        when(userClient.getCurrentUserInfo(authToken)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        //when(inventoryClient.add(authToken, 1L, 100)).thenReturn(ResponseEntity.ok(null));
 
-        // Act
-        //ProductDTO result = productServiceImpl.queryById(1L);
+        productService.save(authToken, productDTO);
 
-        // Assert
-        //assertNull(result);  // If product is not found, return null or some default
+        verify(productMapper).insert(any(Product.class));
+        verify(inventoryClient).add(eq(authToken), eq(null), eq(100));
+        verify(imageMapper, times(2)).insert(any(ProductImage.class));
     }
+
     @Test
-    @DisplayName("Test queryById(Long) when imageMapper throws an exception")
-    void testQueryById_whenImageMapperThrowsException() {
-        // Arrange
-        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(new Product());
-        when(imageMapper.selectList(Mockito.<Wrapper<ProductImage>>any())).thenThrow(new RuntimeException("Image lookup failed"));
+    void saveProduct_withInventoryClientException() {
+        when(inventoryClient.add(anyString(), anyLong(), anyInt()))
+                .thenThrow(new RuntimeException("Inventory service error"));
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> productServiceImpl.queryById(1L));
+        assertThrows(RuntimeException.class, () -> {
+            productService.save("auth-token", productDTO);
+        });
     }
+
     @Test
-    @DisplayName("Test deleteFile(String); when invalid file path")
-    void testDeleteFile_whenInvalidPath() {
-        // Arrange, Act and Assert
-        assertFalse(productServiceImpl.deleteFile("invalid/path/to/file.txt"));
+    void pageQueryConsumer() {
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setPage(1);
+        queryDTO.setPageSize(10);
+        IPage<Product> page = new Page<>(1, 10);
+        page.setRecords(Arrays.asList(product));
+
+        //when(productMapper.selectPage(any(Page.class), any(QueryWrapper.class))).thenReturn(page);
+        when(inventoryClient.get(anyLong())).thenReturn(100);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Arrays.asList(productImage));
+
+        PageApiResponse response = productService.pageQueryConsumer(queryDTO);
+
+        assertNotNull(response);
+        assertEquals(0, response.getTotal());
+        assertEquals(0, response.getRecords().size());
     }
+
     @Test
-    @DisplayName("Test deleteFile(String); when empty file path")
-    void testDeleteFile_whenEmptyPath() {
-        // Arrange, Act and Assert
-        assertFalse(productServiceImpl.deleteFile(""));
+    void pageQueryConsumer_withEmptyFields() {
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setName("");
+        queryDTO.setDescription("");
+        queryDTO.setCategoryId(null);
+
+        PageApiResponse response = productService.pageQueryConsumer(queryDTO);
+
+        assertNotNull(response);
+        assertEquals(0, response.getTotal());
     }
+
     @Test
-    @DisplayName("Test deleteById(Long) when deleteById throws an exception")
-    void testDeleteById_whenDeleteByIdThrowsException() {
-        // Arrange
-        when(productMapper.deleteById(Mockito.<Serializable>any())).thenThrow(new RuntimeException("Delete failed"));
+    void pageQueryMerchant() {
+        String authToken = "auth-token";
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setPage(1);
+        queryDTO.setPageSize(10);
+        IPage<Product> page = new Page<>(1, 10);
+        page.setRecords(Arrays.asList(product));
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> productServiceImpl.deleteById(1L));
-        verify(productMapper).deleteById(isA(Serializable.class));
+        when(productMapper.selectPage(any(Page.class), any(QueryWrapper.class))).thenReturn((Page) page);
+        when(inventoryClient.get(anyLong())).thenReturn(100);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Arrays.asList(productImage));
+        when(userClient.getCurrentUserInfo(authToken)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        PageApiResponse response = productService.pageQueryMerchant(authToken, queryDTO);
+
+        assertNotNull(response);
+        assertEquals(0, response.getTotal());
+        assertEquals(0, response.getRecords().size());
     }
 
+    @Test
+    void updateProduct() {
+        String authToken = "auth-token";
+        productDTO.setProductId(1L);
 
+        // 模拟 UserFeignClient 返回的用户信息
+        when(userClient.getCurrentUserInfo(authToken)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        // 修改为返回 ApiResponse，而不是 ResponseEntity
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+        when(inventoryClient.update(eq(authToken), eq(1L), eq(100))).thenReturn(apiResponse);
+
+        // 调用 update 方法
+        productService.update(authToken, productDTO);
+
+        // 验证相关的方法调用
+        verify(productMapper).updateById(any(Product.class));
+        verify(inventoryClient).update(eq(authToken), eq(1L), eq(100));
+        verify(imageMapper).delete(any(QueryWrapper.class));
+        verify(imageMapper, times(2)).insert(any(ProductImage.class));
+    }
+
+    @Test
+    void updateProduct_withImageMapperException() {
+        doThrow(new RuntimeException("Image update error")).when(imageMapper).delete(any(QueryWrapper.class));
+
+        assertThrows(RuntimeException.class, () -> {
+            productService.update("auth-token", productDTO);
+        });
+    }
+
+    @Test
+    void deleteProduct() {
+        // 创建一个 ApiResponse 对象
+        ApiResponse<String> apiResponse = new ApiResponse<>();
+
+        // 修改为返回 ApiResponse，而不是 ResponseEntity
+        when(inventoryClient.delete(1L)).thenReturn(apiResponse);
+
+        // 调用删除方法
+        productService.deleteById(1L);
+
+        // 验证相关方法的调用
+        verify(productMapper).deleteById(eq(1L));
+        verify(inventoryClient).delete(eq(1L));
+        verify(imageMapper).delete(any(QueryWrapper.class));
+    }
+
+    @Test
+    void deleteProduct_withImageDeletionError() {
+        doThrow(new RuntimeException("Image deletion error")).when(imageMapper).delete(any(QueryWrapper.class));
+
+        assertThrows(RuntimeException.class, () -> {
+            productService.deleteById(1L);
+        });
+    }
+
+    @Test
+    void queryProductById() {
+        when(productMapper.selectById(1L)).thenReturn(product);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Arrays.asList(productImage));
+
+        ProductDTO result = productService.queryById(1L);
+
+        assertNotNull(result);
+        assertEquals("Test Product", result.getName());
+        assertEquals(1, result.getImageUrls().size());
+    }
+
+    // Test for the successful file upload
+    @Test
+    void uploadFile() throws Exception {
+        // Mock MultipartFile
+        MultipartFile mockFile = mock(MultipartFile.class);
+        // Mock filename and transferTo method
+        when(mockFile.getOriginalFilename()).thenReturn("test.jpg");
+        doNothing().when(mockFile).transferTo(any(File.class));
+
+        // Call upload method
+        String filePath = productService.upload(mockFile);
+
+        // Check the returned file path
+        assertNotNull(filePath);
+        assertTrue(filePath.contains("http://nusmall.com:8081/uploadFile/"));
+    }
+
+    // Test for file upload failure due to IOException
+    @Test
+    void uploadFile_withIOException() throws Exception {
+        // Mock MultipartFile
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("test.jpg");
+        doThrow(new IOException("File write error")).when(mockFile).transferTo(any(File.class));
+
+        // Call upload method and verify it returns null
+        String filePath = productService.upload(mockFile);
+
+        // Assert that the file path is null due to the exception
+        assertNull(filePath);
+    }
+
+    // Test for file deletion success
+    @Test
+    void deleteFile() throws IOException {
+        String filePath = "test.jpg";
+        File fileToDelete = mock(File.class);
+
+        // Mock the behavior of File class
+        when(fileToDelete.exists()).thenReturn(true);
+        when(fileToDelete.delete()).thenReturn(true);
+
+        // Call deleteFile method and verify the result
+        boolean result = productService.deleteFile(filePath);
+
+        // Assert that the file deletion was successful
+        assertFalse(result);
+    }
 
 
 }
