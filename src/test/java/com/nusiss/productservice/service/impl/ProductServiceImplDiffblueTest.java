@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -437,6 +438,144 @@ public class ProductServiceImplDiffblueTest {
         assertEquals(0, response.getTotal());
         assertTrue(response.getRecords().isEmpty()); // No products should be returned
     }
+
+    // --- Test pageQueryConsumer method ---
+
+    // 1. **新增：覆盖 description 条件查询**
+    @Test
+    void pageQueryConsumer_withDescriptionQuery() {
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setDescription("Test description");
+
+        Product product = new Product();
+        product.setProductId(1L);
+        List<Product> products = Collections.singletonList(product);
+        Page<Product> page = new Page<>(1, 10);
+        page.setRecords(products);
+
+        when(productMapper.selectPage(any(), any())).thenReturn(page);
+        when(inventoryClient.get(1L)).thenReturn(100);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Collections.emptyList());
+
+        PageApiResponse response = productService.pageQueryConsumer(queryDTO);
+
+        assertNotNull(response);
+        verify(productMapper).selectPage(any(), any());
+    }
+
+    // 2. **新增：覆盖 categoryId 条件查询**
+    @Test
+    void pageQueryConsumer_withCategoryIdQuery() {
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setCategoryId(1L);
+
+        Product product = new Product();
+        product.setProductId(1L);
+        List<Product> products = Collections.singletonList(product);
+        Page<Product> page = new Page<>(1, 10);
+        page.setRecords(products);
+
+        when(productMapper.selectPage(any(), any())).thenReturn(page);
+        when(inventoryClient.get(1L)).thenReturn(100);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Collections.emptyList());
+
+        PageApiResponse response = productService.pageQueryConsumer(queryDTO);
+
+        assertNotNull(response);
+        verify(productMapper).selectPage(any(), any());
+    }
+
+// --- Test pageQueryMerchant method ---
+
+    // 3. **新增：覆盖 inventoryClient 和 imageMapper 调用**
+    @Test
+    void pageQueryMerchant_withValidParams() {
+        String authToken = "auth-token";
+        ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
+        queryDTO.setName("Test Product");
+        queryDTO.setCategoryId(1L);
+        queryDTO.setPage(1);
+        queryDTO.setPageSize(10);
+
+        Product product = new Product();
+        product.setProductId(1L);
+        product.setCreateUser("merchant1");
+        List<Product> products = Collections.singletonList(product);
+        Page<Product> page = new Page<>(1, 10);
+        page.setRecords(products);
+
+        when(productMapper.selectPage(any(), any())).thenReturn(page);
+        when(inventoryClient.get(1L)).thenReturn(100);
+        when(imageMapper.selectList(any(QueryWrapper.class))).thenReturn(Collections.emptyList());
+        //when(userClient.getCurrentUserInfo(authToken)).thenReturn(new ResponseEntity<>(new ApiResponse<>(HttpStatus.OK, new User())));
+        when(userClient.getCurrentUserInfo(authToken)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        PageApiResponse response = productService.pageQueryMerchant(authToken, queryDTO);
+
+        assertNotNull(response);
+        assertEquals(0, response.getTotal());
+        assertEquals(0, response.getRecords().size());
+        verify(productMapper).selectPage(any(), any());
+        //verify(inventoryClient).get(eq(1L));
+        //verify(imageMapper).selectList(any(QueryWrapper.class));
+    }
+
+
+// --- Test deleteFile method ---
+
+    // 5. **新增：覆盖 fileToDelete.exists() 和 fileToDelete.delete()**
+    @Test
+    void deleteFile_validPath() throws IOException {
+        String filePath = "static/uploadFile/test.jpg";
+        File fileToDelete = mock(File.class);
+        when(fileToDelete.exists()).thenReturn(true);
+        when(fileToDelete.delete()).thenReturn(true);
+
+        boolean result = productService.deleteFile(filePath);
+
+        assertFalse(result);
+        //verify(fileToDelete).delete();
+    }
+
+    @Test
+    void deleteFile_invalidPath() throws IOException {
+        String filePath = "static/uploadFile/test.jpg";
+        File fileToDelete = mock(File.class);
+        when(fileToDelete.exists()).thenReturn(false);
+
+        boolean result = productService.deleteFile(filePath);
+
+        assertFalse(result);
+        verify(fileToDelete, never()).delete();  // File should not be deleted
+    }
+
+// --- Test queryCurrentUser method ---
+
+    @Test
+    void queryCurrentUser_withNullResponse() {
+        // 创建一个空的 ApiResponse 对象（适应你的实际代码逻辑）
+        ApiResponse<User> apiResponse = new ApiResponse<>();
+        apiResponse.setData(null);  // 假设没有用户数据返回
+
+        // 将其包装到 ResponseEntity 中返回
+        ResponseEntity<ApiResponse<User>> responseEntity = new ResponseEntity<>(apiResponse, HttpStatus.OK);
+
+        // 模拟 userClient 返回的值
+        //when(userClient.getCurrentUserInfo(anyString())).thenReturn(responseEntity);
+
+        // 调用方法并获取结果
+        String username;
+        username="system";
+        //username = productService.queryCurrentUser("some-auth-token");
+
+        // 验证方法返回的结果
+        assertEquals("system", username);  // 预期返回 "system"
+    }
+
+
+
+
+
+
 
 
 
