@@ -25,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.nusiss.commonservice.entity.User;
 import com.nusiss.commonservice.config.ApiResponse;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -306,11 +308,22 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         try {
             // Create a File object for the specified path
             String realPath = PREFIX_PATH + filePath;
+            // add security
             File fileToDelete = new File(realPath);
+            Path targetPath  = new File(realPath).toPath().normalize();
+            File file = new File(String.valueOf(targetPath));
+
+            String canonicalDestinationPath = fileToDelete.getCanonicalPath();
+            if (!canonicalDestinationPath.startsWith(PREFIX_PATH)) {
+                throw new IOException("Entry is outside of the target directory");
+            }
 
             // Check if the file exists
             if (fileToDelete.exists()) {
                 // Attempt to delete the file
+                if (!file.toPath().normalize().startsWith(targetPath)) {
+                    throw new IOException("Entry is outside of the target directory");
+                }
                 boolean isDeleted = fileToDelete.delete();
                 if (isDeleted) {
                     log.info("File deleted successfully: {}", filePath);
