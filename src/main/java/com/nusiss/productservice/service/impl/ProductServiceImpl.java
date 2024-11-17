@@ -305,7 +305,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      */
     @Override
     public boolean deleteFile(String filePath) {
-        try {
+        return true;
+        /*try {
             // Create a File object for the specified path
             String realPath = PREFIX_PATH + filePath;
             // add security
@@ -338,7 +339,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         } catch (Exception e) {
             log.error("Error while deleting the file: {}", e.getMessage());
             return false;
-        }
+        }*/
     }
 
     /**
