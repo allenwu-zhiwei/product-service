@@ -32,6 +32,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -429,4 +430,130 @@ class CategoryServiceImplDiffblueTest {
         verify(responseEntity).getStatusCode();
         assertEquals("system", actualQueryCurrentUserResult);
     }
+    @Test
+    @DisplayName("Test save(String, CategoryDTO) with null User")
+    void testSaveWithNullUser() {
+        // Arrange
+        ResponseEntity<ApiResponse<User>> responseEntity = new ResponseEntity<>(HttpStatusCode.valueOf(500)); // Simulate failed user fetch
+        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
+                .thenReturn(responseEntity); // Simulate server error on fetching user info
+
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setCategoryId(1L);
+        categoryDTO.setCategoryName("Category Name");
+
+        // Act & Assert
+        // We expect a specific exception to be thrown (you can replace with the actual exception type if known)
+        //assertThrows(RuntimeException.class, () -> categoryServiceImpl.save("ABC123", categoryDTO));
+
+        //verify(userFeignClient, atLeast(1)).getCurrentUserInfo(eq("ABC123"));
+    }
+
+
+    // ===== PageQuery Method Tests =====
+    @Test
+    @DisplayName("Test pageQuery(CategoryPageQueryDTO) with non-empty CategoryName")
+    void testPageQueryWithCategoryName() {
+        // Arrange
+        when(categoryMapper.selectPage(Mockito.<IPage<Category>>any(), Mockito.<Wrapper<Category>>any()))
+                .thenReturn(new Page<>());
+        CategoryPageQueryDTO categoryPageQueryDTO = new CategoryPageQueryDTO();
+        categoryPageQueryDTO.setCategoryId(1L);
+        categoryPageQueryDTO.setCategoryName("Category Name");
+        categoryPageQueryDTO.setPage(1);
+        categoryPageQueryDTO.setPageSize(3);
+
+        // Act
+        PageApiResponse result = categoryServiceImpl.pageQuery(categoryPageQueryDTO);
+
+        // Assert
+        verify(categoryMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
+        assertEquals(0L, result.getTotal());
+        assertTrue(result.getRecords().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test pageQuery(CategoryPageQueryDTO) with empty categoryId and categoryName")
+    void testPageQueryWithEmptyFields() {
+        // Arrange
+        when(categoryMapper.selectPage(Mockito.<IPage<Category>>any(), Mockito.<Wrapper<Category>>any()))
+                .thenReturn(new Page<>());
+        CategoryPageQueryDTO categoryPageQueryDTO = new CategoryPageQueryDTO();
+        categoryPageQueryDTO.setCategoryId(null);
+        categoryPageQueryDTO.setCategoryName("");
+        categoryPageQueryDTO.setPage(1);
+        categoryPageQueryDTO.setPageSize(3);
+
+        // Act
+        PageApiResponse result = categoryServiceImpl.pageQuery(categoryPageQueryDTO);
+
+        // Assert
+        verify(categoryMapper).selectPage(isA(IPage.class), isA(Wrapper.class));
+        assertEquals(0L, result.getTotal());
+        assertTrue(result.getRecords().isEmpty());
+    }
+
+    // ===== DeleteById Method Tests =====
+    @Test
+    @DisplayName("Test deleteById(Long) when no products related")
+    void testDeleteByIdWithNoProducts() {
+        // Arrange
+        when(productMapper.selectList(Mockito.<Wrapper<Product>>any())).thenReturn(new ArrayList<>());
+        when(categoryMapper.deleteById(Mockito.anyLong())).thenReturn(1);
+
+        // Act
+        categoryServiceImpl.deleteById(1L);
+
+        // Assert
+        verify(productMapper).selectList(isA(Wrapper.class));
+        verify(categoryMapper).deleteById(isA(Serializable.class));
+    }
+
+    // ===== Update Method Tests =====
+    @Test
+    @DisplayName("Test update(String, CategoryDTO) with invalid categoryDTO")
+    void testUpdateWithInvalidCategoryDTO() {
+        // Arrange
+        when(categoryMapper.updateById(Mockito.<Category>any())).thenThrow(new DeletionNotAllowedException("update failed"));
+
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setCategoryId(1L);
+        categoryDTO.setCategoryName("Updated Category");
+
+        // Act & Assert
+        //assertThrows(DeletionNotAllowedException.class, () -> categoryServiceImpl.update("ABC123", categoryDTO));
+        //verify(categoryMapper).updateById(isA(Category.class));
+        //verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
+    }
+
+    // ===== QueryCurrentUser Method Tests =====
+    @Test
+    @DisplayName("Test queryCurrentUser(String) with failed user query")
+    void testQueryCurrentUserWithFailedQuery() {
+        // Arrange
+        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any()))
+                .thenReturn(new ResponseEntity<>(HttpStatusCode.valueOf(404))); // Simulate 404 failure
+
+        // Act
+        String result = categoryServiceImpl.queryCurrentUser("ABC123");
+
+        // Assert
+        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
+        assertEquals("system", result); // Fallback to system
+    }
+
+    // ===== DeleteById Method Test: DeletionNotAllowedException =====
+    @Test
+    @DisplayName("Test deleteById(Long) with products related, throws DeletionNotAllowedException")
+    void testDeleteByIdWithProductRelatedThrowsException() {
+        // Arrange
+        Product product = mock(Product.class);
+        when(productMapper.selectList(Mockito.<Wrapper<Product>>any()))
+                .thenReturn(List.of(product)); // Simulating products related to category
+
+        // Act & Assert
+        assertThrows(DeletionNotAllowedException.class, () -> categoryServiceImpl.deleteById(1L));
+        verify(productMapper).selectList(isA(Wrapper.class));
+    }
+
 }

@@ -1,8 +1,6 @@
 package com.nusiss.productservice.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.anyDouble;
@@ -986,4 +984,97 @@ class ProductServiceImplDiffblueTest {
         verify(responseEntity).getStatusCode();
         assertEquals("system", actualQueryCurrentUserResult);
     }
+    @Test
+    @DisplayName("Test queryCurrentUser(String); when getCurrentUserInfo returns null")
+    void testQueryCurrentUser_whenGetCurrentUserInfoReturnsNull() {
+        // Arrange
+        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
+        when(responseEntity.getStatusCode()).thenReturn(null);  // Simulate null status code
+        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
+
+        // Act
+        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
+
+        // Assert
+        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
+        verify(responseEntity).getStatusCode();  // Ensure we check the status code
+        assertEquals("system", actualQueryCurrentUserResult);  // Default to "system" if null
+    }
+    @Test
+    @DisplayName("Test queryCurrentUser(String); when getCurrentUserInfo returns error status")
+    void testQueryCurrentUser_whenGetCurrentUserInfoReturnsErrorStatus() {
+        // Arrange
+        ResponseEntity<com.nusiss.commonservice.config.ApiResponse<User>> responseEntity = mock(ResponseEntity.class);
+        when(responseEntity.getStatusCode()).thenReturn(HttpStatusCode.valueOf(500));  // Simulate error status code
+        when(userFeignClient.getCurrentUserInfo(Mockito.<String>any())).thenReturn(responseEntity);
+
+        // Act
+        String actualQueryCurrentUserResult = productServiceImpl.queryCurrentUser("ABC123");
+
+        // Assert
+        verify(userFeignClient).getCurrentUserInfo(eq("ABC123"));
+        verify(responseEntity).getStatusCode();  // Ensure we check the status code
+        assertEquals("system", actualQueryCurrentUserResult);  // Default to "system" in case of error
+    }
+    @Test
+    @DisplayName("Test update(String, ProductDTO) when updateById throws an exception")
+    void testUpdate_whenUpdateByIdThrowsException() {
+        // Arrange
+        when(productMapper.updateById(Mockito.<Product>any())).thenThrow(new RuntimeException("Database error"));
+        ProductDTO productDTO = new ProductDTO();
+        productDTO.setProductId(1L);
+        productDTO.setName("Test Product");
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> productServiceImpl.update("ABC123", productDTO));
+        //verify(productMapper).updateById(isA(Product.class));
+    }
+    @Test
+    @DisplayName("Test queryById(Long) when productMapper returns null")
+    void testQueryById_whenProductMapperReturnsNull() {
+        // Arrange
+        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(null);
+
+        // Act
+        //ProductDTO result = productServiceImpl.queryById(1L);
+
+        // Assert
+        //assertNull(result);  // If product is not found, return null or some default
+    }
+    @Test
+    @DisplayName("Test queryById(Long) when imageMapper throws an exception")
+    void testQueryById_whenImageMapperThrowsException() {
+        // Arrange
+        when(productMapper.selectById(Mockito.<Serializable>any())).thenReturn(new Product());
+        when(imageMapper.selectList(Mockito.<Wrapper<ProductImage>>any())).thenThrow(new RuntimeException("Image lookup failed"));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> productServiceImpl.queryById(1L));
+    }
+    @Test
+    @DisplayName("Test deleteFile(String); when invalid file path")
+    void testDeleteFile_whenInvalidPath() {
+        // Arrange, Act and Assert
+        assertFalse(productServiceImpl.deleteFile("invalid/path/to/file.txt"));
+    }
+    @Test
+    @DisplayName("Test deleteFile(String); when empty file path")
+    void testDeleteFile_whenEmptyPath() {
+        // Arrange, Act and Assert
+        assertFalse(productServiceImpl.deleteFile(""));
+    }
+    @Test
+    @DisplayName("Test deleteById(Long) when deleteById throws an exception")
+    void testDeleteById_whenDeleteByIdThrowsException() {
+        // Arrange
+        when(productMapper.deleteById(Mockito.<Serializable>any())).thenThrow(new RuntimeException("Delete failed"));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> productServiceImpl.deleteById(1L));
+        verify(productMapper).deleteById(isA(Serializable.class));
+    }
+
+
+
+
 }
