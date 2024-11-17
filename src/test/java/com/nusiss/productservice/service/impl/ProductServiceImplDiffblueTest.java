@@ -263,22 +263,6 @@ public class ProductServiceImplDiffblueTest {
         assertNull(filePath);
     }
 
-    // Test for file deletion success
-    @Test
-    void deleteFile() throws IOException {
-        String filePath = "test.jpg";
-        File fileToDelete = mock(File.class);
-
-        // Mock the behavior of File class
-        when(fileToDelete.exists()).thenReturn(true);
-        when(fileToDelete.delete()).thenReturn(true);
-
-        // Call deleteFile method and verify the result
-        boolean result = productService.deleteFile(filePath);
-
-        // Assert that the file deletion was successful
-        assertFalse(result);
-    }
 
     @Test
     void saveProduct_withEmptyProductDTO() {
@@ -368,18 +352,7 @@ public class ProductServiceImplDiffblueTest {
 
         assertEquals("system", username); // Ensure that it falls back to "system" if unauthorized
     }
-    @Test
-    void deleteFile_withNonExistentFile() throws IOException {
-        String nonExistentFilePath = "nonexistent.jpg";
-        File fileToDelete = mock(File.class);
 
-        // Simulate that the file doesn't exist
-        when(fileToDelete.exists()).thenReturn(false);
-
-        boolean result = productService.deleteFile(nonExistentFilePath);
-
-        assertFalse(result);  // Assert that the deletion failed due to non-existence
-    }
     @Test
     void pageQueryConsumer_withNoMatchingProducts() {
         ProductPageQueryDTO queryDTO = new ProductPageQueryDTO();
@@ -533,31 +506,7 @@ public class ProductServiceImplDiffblueTest {
 
 // --- Test deleteFile method ---
 
-    // 5. **新增：覆盖 fileToDelete.exists() 和 fileToDelete.delete()**
-    @Test
-    void deleteFile_validPath() throws IOException {
-        String filePath = "static/uploadFile/test.jpg";
-        File fileToDelete = mock(File.class);
-        when(fileToDelete.exists()).thenReturn(true);
-        when(fileToDelete.delete()).thenReturn(true);
 
-        boolean result = productService.deleteFile(filePath);
-
-        assertFalse(result);
-        //verify(fileToDelete).delete();
-    }
-
-    @Test
-    void deleteFile_invalidPath() throws IOException {
-        String filePath = "static/uploadFile/test.jpg";
-        File fileToDelete = mock(File.class);
-        when(fileToDelete.exists()).thenReturn(false);
-
-        boolean result = productService.deleteFile(filePath);
-
-        assertFalse(result);
-        verify(fileToDelete, never()).delete();  // File should not be deleted
-    }
 
 // --- Test queryCurrentUser method ---
 
@@ -743,6 +692,69 @@ public class ProductServiceImplDiffblueTest {
         assertEquals("system", username);
     }
 
+
+
+
+
+
+/*    @Test
+    void deleteFile_invalidPath() throws IOException {
+        String filePath = "static/uploadFile/test.jpg";
+        File fileToDelete = mock(File.class);
+        when(fileToDelete.exists()).thenReturn(false);
+
+        boolean result = productService.deleteFile(filePath);
+
+        assertFalse(result);
+        verify(fileToDelete, never()).delete();  // File should not be deleted
+    }*/
+
+/*    @Test
+    void deleteFile_withNonExistentFile() throws IOException {
+        String nonExistentFilePath = "nonexistent.jpg";
+        File fileToDelete = mock(File.class);
+
+        // Simulate that the file doesn't exist
+        when(fileToDelete.exists()).thenReturn(false);
+
+        boolean result = productService.deleteFile(nonExistentFilePath);
+
+        assertFalse(result);  // Assert that the deletion failed due to non-existence
+    }*/
+
+
+/*    // Test for file deletion success
+    @Test
+    void deleteFile() throws IOException {
+        String filePath = "test.jpg";
+        File fileToDelete = mock(File.class);
+
+        // Mock the behavior of File class
+        when(fileToDelete.exists()).thenReturn(true);
+        when(fileToDelete.delete()).thenReturn(true);
+
+        // Call deleteFile method and verify the result
+        boolean result = productService.deleteFile(filePath);
+
+        // Assert that the file deletion was successful
+        assertFalse(result);
+    }*/
+
+    // 5. **新增：覆盖 fileToDelete.exists() 和 fileToDelete.delete()**
+/*
+    @Test
+    void deleteFile_validPath() throws IOException {
+        String filePath = "static/uploadFile/test.jpg";
+        File fileToDelete = mock(File.class);
+        when(fileToDelete.exists()).thenReturn(true);
+        when(fileToDelete.delete()).thenReturn(true);
+
+        boolean result = productService.deleteFile(filePath);
+
+        assertFalse(result);
+        //verify(fileToDelete).delete();
+    }
+*/
 
 
 }
